@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE scenario SYSTEM "xml/dtd">
+<scenario version="1.00" cbi="phidias" image="raw">
+  <platform board="hikey" arch="arm64">
+    <board id="hikey">
+      <device id="serial" base="0xf7113000" size="0x1000"/>
+      <device id="irqc" base="0xf6800000" size="0x8000"/>
+      <device id="gpio03" base="0xf8011000" size="0x4000"/>
+      <device id="gpio4j" base="0xf7020000" size="0x10000"/>
+      <device id="timers" base="0xf8008000" size="0x9000"/>
+      <device id="thermal" base="0xf7030000" size="0x2000"/>
+      <device id="CATCHALL" base="0xf0000000" size="0x0fff0000"/>
+      <memory id="dram" base="0x00000000" size="0x80000000">
+        <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1,2,3,4,5,6,7]" on="dram" base="[0]=0x0;[1]=0x40000;[2]=0x80000;[3]=0xc0000;[4]=0x100000;[5]=0x140000;[6]=0x180000;[7]=0x1c0000"/>
+        <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x200000"/>
+        <memreq id="core_rx" size="0x9000" flags_demand="rxg" flags_prevent="wdus" on="dram" base="0x10008000"/>
+        <memreq id="core_r" size="0x3000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10011000"/>
+        <memreq id="core_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x10014000"/>
+        <memreq id="core_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10015000"/>
+        <memreq id="core_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1,2,3,4,5,6,7]" on="dram" base="[0]=0x240000;[1]=0x241000;[2]=0x242000;[3]=0x243000;[4]=0x244000;[5]=0x245000;[6]=0x246000;[7]=0x247000"/>
+        <memreq id="config_r" size="0x6000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10016000"/>
+        <memreq id="config_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1,2,3,4,5,6,7]" on="dram" base="[0]=0x248000;[1]=0x249000;[2]=0x24a000;[3]=0x24b000;[4]=0x24c000;[5]=0x24d000;[6]=0x24e000;[7]=0x24f000"/>
+        <memreq id="config_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x1001d000"/>
+        <memreq id="config_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1001c000"/>
+        <memreq id="pagetables" size="0xa0000" flags_demand="" flags_prevent="wxdus" on="dram" base="0x1001e000"/>
+        <memreq id="blob" size="0x9f3000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x100be000"/>
+        <memreq id="stack" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1,2,3,4,5,6,7]" on="dram" base="[0]=0x250000;[1]=0x251000;[2]=0x252000;[3]=0x253000;[4]=0x254000;[5]=0x255000;[6]=0x256000;[7]=0x257000"/>
+        <memreq id="linux1_main" size="0x40000000" flags_demand="rw" flags_prevent="xdus" on="dram" cpumap="[0]" base="[0]=0x40000000"/>
+        <memreq id="linux1_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram" base="[0]=0x258000"/>
+      </memory>
+      <memory id="sram" base="0xfff80000" size="0x12000">
+        <memreq id="linux1_sram" base="0xfff80000" size="0x11000" flags_prevent="" flags_demand="" on="sram" cpumap="[0]"/>
+      </memory>
+    </board>
+    <arch id="arm64">
+      <!-- Assumptions:
+       * The hypervisor is operating at EL2.
+         EL1 will require different bit patterns, and especially a usable 'g'lobal bit.
+       * MAIR_EL2 index 0 is programmed as Normal Memory.
+       * MAIR_EL2 index 1 is programmed as Device_nGnRnE.
+         (No other MAIR index is used.)
+  -->
+      <paging_format id="arm64:g4io40" va_width="64" pa_width="64" size_estimate="0x10000">
+        <level dir_base="0x8000000000000003" shift="39" width="1" bpe="8" align="4">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+        </level>
+        <level dir_base="0x8000000000000003" leaf_base="0x461" shift="30" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x0" value_clear="0x80"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x4" value_clear="0x0"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level dir_base="0x8000000000000003" leaf_base="0x461" shift="21" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x0" value_clear="0x80"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x4" value_clear="0x0"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level leaf_base="0x463" shift="12" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x0" value_clear="0x80"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x4" value_clear="0x0"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+      </paging_format>
+      <paging_format id="arm64:g4io40n" va_width="64" pa_width="64" size_estimate="0x10000">
+        <level dir_base="0x3" leaf_base="0x441" shift="30" width="10" bpe="8" align="13">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x80" value_clear="0x0"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x0" value_clear="0x3c"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level dir_base="0x3" leaf_base="0x441" shift="21" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x80" value_clear="0x0"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x0" value_clear="0x3c"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level leaf_base="0x443" shift="12" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x80" value_clear="0x0"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x0" value_clear="0x3c"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+      </paging_format>
+    </arch>
+  </platform>
+  <!-- Boot this setup with:
+	./hisi-idt.py -d /dev/ttyUSB1 \-\-img1 .../l-loader/l-loader.bin
+	fastboot boot $BUILD/hikey/image
+   -->
+  <hypervisor ncpus="8" load_base="0x10008000" exec_base="0xf40000000" ccprefix="aarch64-linux-gnu-" entry="0x10008000">
+    <feature name="multiplexer" value="yes"/>
+    <feature name="debugger" value="yes"/>
+    <feature name="driver:uart" value="pl011"/>
+    <feature name="driver:timer" value="arm_generic"/>
+    <feature name="driver:clock" value="arm_generic"/>
+    <feature name="driver:irq" value="gic"/>
+    <address_space type="mmu" format="arm64:g4io40" base="[-1]=0x10023000;[0]=0x1002d000;[1]=0x10037000;[2]=0x10041000;[3]=0x1004b000;[4]=0x10055000;[5]=0x1005f000;[6]=0x10069000;[7]=0x10073000">
+      <map xref="serial" flags="rwgd" base="0xf400c0000"/>
+      <map xref="irqc" flags="rwgd" base="0xf400b4000"/>
+      <map xref="gpio4j" flags="rwgd" base="0xf40099000"/>
+      <map xref="timers" flags="rwgd" base="0xf400aa000"/>
+      <map xref="thermal" flags="rwgd" base="0xf400bd000"/>
+      <map xref="CATCHALL" flags="rwgd" base="0xf40200000"/>
+      <map xref="core_rx" is_init="is_init" flags="rxg" base="0xf40000000"/>
+      <map xref="core_r" flags="rg" base="0xf40009000"/>
+      <map xref="core_rws" flags="rwgs" base="0xf4000c000"/>
+      <map xref="core_rwt" flags="rg" base="0xf400c2000"/>
+      <map xref="core_rw" flags="rwg" base="0xf4000d000"/>
+      <map xref="config_r" is_init="is_init" flags="rg" base="0xf4000e000"/>
+      <map xref="config_rw" flags="rwg" base="0xf40014000"/>
+      <map xref="config_rws" flags="rwgs" base="0xf40015000"/>
+      <map xref="config_rwt" flags="rg" base="0xf400c4000"/>
+      <map xref="blob" flags="rg" base="0xf50200000"/>
+      <map xref="stack" flags="rwg" base="0xf400c6000"/>
+      <map xref="trace" flags="rwg" base="0xf40017000"/>
+      <map xref="xcore" flags="rwgs" base="0xf40058000"/>
+      <map xref="linux1_main" flags="rw" cpumap="[0]" base="[0]=0x40000000"/>
+      <map xref="linux1_arch" flags="rwg" cpumap="[0]" base="[0]=0xf400c8000"/>
+    </address_space>
+  </hypervisor>
+  <guest id="linux1" ncpus="1" cpumap="[0]">
+    <vdev id="linux1_uart" type="serial" frontend="pl011" master="master">
+      <emulate base="0xf7113000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_gic" type="irq_controller" frontend="arm_gic_virtext" master="master">
+      <emulate base="0xf6801000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_sp804" type="timer" frontend="sp804">
+      <emulate base="0xf8008000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_armcp14" type="timer" frontend="armcp14"/>
+    <vdev id="linux1_mmio_mediactrl" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf4410000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio1" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7020000" size="0x14000"/>
+    </vdev>
+    <vdev id="linux1_mmio_aoctrl" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7800000" size="0x2000"/>
+    </vdev>
+    <vdev id="linux1_mmio3" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf8011000" size="0x5000"/>
+    </vdev>
+    <vdev id="linux1_mmio_uart1" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7111000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio_uart2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7112000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio_uart4" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7114000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio4" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7100000" size="0x8000"/>
+    </vdev>
+    <vdev id="linux1_mmio2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf8000000" size="0x8000"/>
+    </vdev>
+    <address_space type="mmu" format="arm64:g4io40n" base="[0]=0x10074000">
+      <map xref="linux1_main" base="0x00000000" flags="rwx"/>
+      <map xref="linux1_sram" base="0xfff80000" flags="rwx"/>
+      <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
+    </address_space>
+    <init arch_page="linux1_arch">
+      <copy xref="linux_kernel" dref="linux1_main" offset="0x80000"/>
+      <copy xref="linux_ramdisk" dref="linux1_main" offset="0xa000000"/>
+      <copy xref="linux_dtb" dref="linux1_main" offset="0x8000"/>
+    </init>
+    <entry bp_xref="linux1_main" bp_offset="0x80000"/>
+    <sched class="wfq"/>
+  </guest>
+  <files>
+    <file id="linux_kernel" href="/home/amna/Thesis/Linux_4.11/linux-4.11-rc2/arch/arm64/boot/Image" offset="0x0" size="0x851808"/>
+    <file id="linux_ramdisk" href="/home/amna/Thesis/Phidias_access/arm64.sq" offset="0x851808" size="0x199000"/>
+    <file id="linux_dtb" href="/home/amna/Thesis/Phidias_access/hi6220new.dtb" offset="0x9ea808" size="0x7ce3"/>
+  </files>
+</scenario>
