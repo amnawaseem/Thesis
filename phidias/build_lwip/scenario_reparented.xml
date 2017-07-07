@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE scenario SYSTEM "xml/dtd">
+<scenario version="1.00" cbi="phidias" image="raw">
+  <platform board="hikey" arch="arm64">
+    <board id="hikey">
+      <device id="serial" base="0xf7113000" size="0x1000"/>
+      <device id="irqc" base="0xf6800000" size="0x8000"/>
+      <device id="gpio03" base="0xf8011000" size="0x4000"/>
+      <device id="gpio4j" base="0xf7020000" size="0x10000"/>
+      <device id="timers" base="0xf8008000" size="0x9000"/>
+      <device id="thermal" base="0xf7030000" size="0x2000"/>
+      <device id="CATCHALL" base="0xf0000000" size="0x0fff0000"/>
+      <memory id="dram" base="0x00000000" size="0x80000000">
+        <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="cca0" flags_demand="" flags_prevent="" size="0x100000" on="dram"/>
+        <memreq id="cca1" flags_demand="" flags_prevent="" size="0x100000" on="dram"/>
+        <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" on="dram"/>
+        <memreq id="core_rx" size="0x0" flags_demand="rxg" flags_prevent="wdus" on="dram"/>
+        <memreq id="core_r" size="0x0" flags_demand="rg" flags_prevent="wxdus" on="dram"/>
+        <memreq id="core_rws" size="0x0" flags_demand="rwgs" flags_prevent="xdu" on="dram"/>
+        <memreq id="core_rwt" size="0x0" flags_demand="rg" flags_prevent="wxdus" on="dram"/>
+        <memreq id="core_rw" size="0x0" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="config_r" size="0x0" flags_demand="rg" flags_prevent="wxdus" on="dram"/>
+        <memreq id="config_rw" size="0x0" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="config_rws" size="0x0" flags_demand="rwgs" flags_prevent="xdu" on="dram"/>
+        <memreq id="config_rwt" size="0x0" flags_demand="rg" flags_prevent="wxdus" on="dram"/>
+        <memreq id="pagetables" size="0x0" flags_demand="" flags_prevent="wxdus" on="dram"/>
+        <memreq id="blob" size="0x0" flags_demand="rg" flags_prevent="wxdus" on="dram"/>
+        <memreq id="stack" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="lwip1_main" size="0x01000000" flags_demand="rw" flags_prevent="xdus" on="dram" cpumap="[0]"/>
+        <memreq id="lwip1_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="lwip1_vtlbpool1" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="lwip1_vtlbpool2" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="lwip1_vtlbpool3" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+        <memreq id="lwip1_vtlbpool4" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
+      </memory>
+      <memory id="sram" base="0xfff80000" size="0x12000"/>
+    </board>
+    <arch id="arm64">
+      <!-- Assumptions:
+       * The hypervisor is operating at EL2.
+         EL1 will require different bit patterns, and especially a usable 'g'lobal bit.
+       * MAIR_EL2 index 0 is programmed as Normal Memory.
+       * MAIR_EL2 index 1 is programmed as Device_nGnRnE.
+         (No other MAIR index is used.)
+  -->
+      <paging_format id="arm64:g4io40" va_width="64" pa_width="64" size_estimate="0x10000">
+        <level dir_base="0x8000000000000003" shift="39" width="1" bpe="8" align="4">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+        </level>
+        <level dir_base="0x8000000000000003" leaf_base="0x461" shift="30" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x0" value_clear="0x80"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x4" value_clear="0x0"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level dir_base="0x8000000000000003" leaf_base="0x461" shift="21" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x0" value_clear="0x80"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x4" value_clear="0x0"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level leaf_base="0x463" shift="12" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x0" value_clear="0x80"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x4" value_clear="0x0"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+      </paging_format>
+      <paging_format id="arm64:g4io40n" va_width="64" pa_width="64" size_estimate="0x10000">
+        <level dir_base="0x3" leaf_base="0x441" shift="30" width="10" bpe="8" align="13">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x80" value_clear="0x0"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x0" value_clear="0x3c"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level dir_base="0x3" leaf_base="0x441" shift="21" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x80" value_clear="0x0"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x0" value_clear="0x3c"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+        <level leaf_base="0x443" shift="12" width="9" bpe="8" align="12">
+          <flag name="r" value_set="0x0" value_clear="0x0"/>
+          <flag name="w" value_set="0x80" value_clear="0x0"/>
+          <flag name="x" value_set="0x0" value_clear="0x40000000000000"/>
+          <flag name="g" value_set="0x0" value_clear="0x0"/>
+          <flag name="d" value_set="0x0" value_clear="0x3c"/>
+          <flag name="u" value_set="0x0" value_clear="0x0"/>
+          <flag name="s" value_set="0x200" value_clear="0x0"/>
+        </level>
+      </paging_format>
+    </arch>
+  </platform>
+  <!-- Boot this setup with:
+	./hisi-idt.py -d /dev/ttyUSB1 \-\-img1 .../l-loader/l-loader.bin
+	fastboot boot $BUILD/hikey/image
+   -->
+  <hypervisor ncpus="1" load_base="0x10008000" exec_base="0xf40000000" ccprefix="aarch64-linux-gnu-">
+    <feature name="multiplexer" value="yes"/>
+    <feature name="debugger" value="yes"/>
+    <feature name="driver:uart" value="pl011"/>
+    <feature name="driver:timer" value="arm_generic"/>
+    <feature name="driver:clock" value="arm_generic"/>
+    <feature name="driver:irq" value="gic"/>
+    <address_space type="mmu" format="arm64:g4io40">
+      <map xref="serial" flags="rwgd"/>
+      <map xref="irqc" flags="rwgd"/>
+      <map xref="gpio4j" flags="rwgd"/>
+      <map xref="timers" flags="rwgd"/>
+      <map xref="thermal" flags="rwgd"/>
+      <map xref="CATCHALL" flags="rwgd"/>
+      <map xref="core_rx" is_init="is_init" flags="rxg"/>
+      <map xref="core_r" flags="rg"/>
+      <map xref="core_rws" flags="rwgs"/>
+      <map xref="core_rwt" flags="rg"/>
+      <map xref="core_rw" flags="rwg"/>
+      <map xref="config_r" is_init="is_init" flags="rg"/>
+      <map xref="config_rw" flags="rwg"/>
+      <map xref="config_rws" flags="rwgs"/>
+      <map xref="config_rwt" flags="rg"/>
+      <map xref="blob" flags="rg"/>
+      <map xref="stack" flags="rwg"/>
+      <map xref="trace" flags="rwg"/>
+      <map xref="xcore" flags="rwgs"/>
+      <map xref="lwip1_main" flags="rw" cpumap="[0]"/>
+      <map xref="lwip1_arch" flags="rwg" cpumap="[0]"/>
+      <map xref="lwip1_vtlbpool1" flags="rwg" cpumap="[0]"/>
+      <map xref="lwip1_vtlbpool2" flags="rwg" cpumap="[0]"/>
+      <map xref="lwip1_vtlbpool3" flags="rwg" cpumap="[0]"/>
+      <map xref="lwip1_vtlbpool4" flags="rwg" cpumap="[0]"/>
+    </address_space>
+  </hypervisor>
+  <guest id="lwip1" ncpus="1" cpumap="[0]">
+    <vdev id="lwip1_uart" type="serial" frontend="pl011" master="master">
+      <emulate base="0xf7113000" size="0x1000"/>
+    </vdev>
+    <vdev id="lwip1_dummy_vtlb" type="vtlb" frontend="arm64:g4io40" master="master">
+      <param type="backing" xref="lwip1_vtlbpool1" value="level1"/>
+      <param type="backing" xref="lwip1_vtlbpool2" value="level2"/>
+      <param type="backing" xref="lwip1_vtlbpool3" value="level3"/>
+      <param type="backing" xref="lwip1_vtlbpool4" value="level4"/>
+    </vdev>
+    <vdev id="lwip1_sp804" type="timer" frontend="sp804">
+      <emulate base="0xf8008000" size="0x1000"/>
+    </vdev>
+    <vdev id="lwip1_armcp14" type="timer" frontend="armcp14"/>
+    <vdev id="lwip1_gic" type="irq_controller" frontend="arm_gic" master="master">
+      <emulate base="0xfedc1000" size="0x1000"/>
+      <emulate base="0xfedc2000" size="0x1000"/>
+    </vdev>
+    <address_space type="mmu" format="arm64:g4io40n">
+      <map xref="lwip1_main" base="0x40000000" flags="rwx"/>
+      <map xref="cca0" base="0xfee00000" flags="rs"/>
+      <map xref="cca1" base="0xfef00000" flags="rws"/>
+    </address_space>
+    <init arch_page="lwip1_arch">
+      <copy xref="lwip_image" dref="lwip1_main" offset="0x00000"/>
+    </init>
+    <entry bp_xref="lwip1_main" bp_offset="0x10000"/>
+    <sched class="wfq"/>
+  </guest>
+  <files>
+    <file id="lwip_image" href="/home/amna/Thesis/phidias/lwip/build/lwip"/>
+  </files>
+</scenario>

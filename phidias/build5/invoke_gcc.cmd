@@ -1,0 +1,1 @@
+aarch64-linux-gnu-gcc -Wall -Wextra -O0 -g2 -fno-pic -fno-PIC -no-pie -fno-zero-initialized-in-bss -nostdlib -nostdinc -ffreestanding -fno-builtin -fno-common -fno-builtin-printf -Wl,--build-id=none -I /home/amna/Thesis/phidias/build5/include -I /home/amna/Thesis/phidias/core/include -I /home/amna/Thesis/phidias/core/../abi -mcpu=cortex-a53 

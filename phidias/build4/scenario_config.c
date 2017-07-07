@@ -234,7 +234,7 @@ __SEC_RO const emulate * const vm_linux1_hw_emulates[2];
 
 
 __SEC_ROH specification const _specification = {
-  "PHIDSPEC", 0x0, 0x0, 0x0, 8, _specification_cpus, _specification_irq_owners, &_specification_arch, "2017/06/28 16:44:49"
+  "PHIDSPEC", 0x0, 0x0, 0x0, 8, _specification_cpus, _specification_irq_owners, &_specification_arch, "2017/07/02 15:38:31"
 };
 __SEC_RO const vm * const _specification_irq_owners[IRQID_MAXIMUM] = {
 };

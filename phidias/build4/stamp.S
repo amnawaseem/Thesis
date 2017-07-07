@@ -2,11 +2,11 @@
 
 .global phidias_buildstamp_git_revision
 phidias_buildstamp_git_revision:
-	.asciz	"3a1771b"
+	.asciz	"3a1771b+"
 
 .global phidias_buildstamp_time_compile
 phidias_buildstamp_time_compile:
-	.asciz	"2017/06/28 15:51:14"
+	.asciz	"2017/07/02 15:29:07"
 
 .global	binutils_version
 binutils_version:
