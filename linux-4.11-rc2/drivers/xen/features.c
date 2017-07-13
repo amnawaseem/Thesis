@@ -30,4 +30,9 @@ void xen_setup_features(void)
 		for (j = 0; j < 32; j++)
 			xen_features[i * 32 + j] = !!(fi.submap & 1<<j);
 	}
+	xen_features[0] = 1;
+	xen_features[2] = 1;
+	xen_features[11] = 1;
+	xen_features[13] = 1;
+
 }

@@ -613,7 +613,8 @@ static unsigned int __max_nr_grant_frames(void)
 	if ((rc < 0) || (query.status != GNTST_okay))
 		return 4; /* Legacy max supported number of frames */
 
-	return query.max_nr_frames;
+	//return query.max_nr_frames;
+    return 32;
 }
 
 unsigned int gnttab_max_grant_frames(void)
@@ -1101,6 +1102,8 @@ int gnttab_init(void)
 	max_nr_glist_frames = (max_nr_grant_frames *
 			       grefs_per_grant_frame / RPP);
 
+    /* gnttab_list is table for containing pointers of grant references . It contains addresse
+	   of grant pages */
 	gnttab_list = kmalloc(max_nr_glist_frames * sizeof(grant_ref_t *),
 			      GFP_KERNEL);
 	if (gnttab_list == NULL)
