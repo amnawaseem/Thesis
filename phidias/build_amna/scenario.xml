@@ -2,10 +2,6 @@
 <!DOCTYPE scenario SYSTEM "xml/dtd">
 <scenario version="1.00" cbi="phidias" image="raw">
   <platform board="hikey" arch="arm64" />
-  <!-- Boot this setup with:
-	./hisi-idt.py -d /dev/ttyUSB1 \-\-img1 .../l-loader/l-loader.bin
-	fastboot boot $BUILD/hikey/image exec_base="0xf40000000" 
-   -->
   <hypervisor ncpus="2" load_base="0x10008000" exec_base="0xf40000000" ccprefix="aarch64-linux-gnu-">
     <feature name="multiplexer" value="yes" />
     <feature name="debugger" value="yes" />
@@ -16,6 +12,7 @@
     <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="*" />
     <memreq id="cca0" flags_demand="rwgs" flags_prevent="" size="0x100000" />
     <memreq id="cca1" flags_demand="rwgs" flags_prevent="" size="0x100000" />
+    <memreq id="grant_table" flags_demand="rwgs" flags_prevent="" size="0x20000" />
     <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" />
     <address_space type="mmu" format="arm64:g4io40">
       <map xref="serial" flags="w" />
@@ -79,16 +76,17 @@
       <emulate base="0xf8000000" size="0x8000" />
     </vdev>
 
-    <vdev id="testing_device" type="memory32">
+    <!--vdev id="testing_device" type="memory32">
       <value type="default_mask_mem_r" value="0xffffffff" />
       <emulate base="0xfee00000" size="0x100000" />
-    </vdev>
+    </vdev-->
 
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux1_main" base="0x00000000" flags="rwx" />
       <map xref="linux1_sram" base="0xfff80000" flags="rwx" />
       <map xref="cca1" base="0xfee00000" flags="rws" />
       <map xref="cca0" base="0xfef00000" flags="rws" />
+      <map xref="grant_table" base="0xff000000" flags="rws" />
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw" />
     </address_space>
     <init arch_page="linux1_arch">
@@ -150,17 +148,17 @@
       <emulate base="0xf8000000" size="0x8000" />
     </vdev>
 
-
-    <vdev id="testing_device2" type="memory32">
+    <!--vdev id="testing_device2" type="memory32">
       <value type="default_mask_mem_r" value="0xffffffff" />
       <emulate base="0xfee00000" size="0x100000" />
-    </vdev>
+    </vdev-->
 
 
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux2_main" base="0x00000000" flags="rwx" />
       <map xref="cca1" base="0xfee00000" flags="rws" />
       <map xref="cca0" base="0xfef00000" flags="rws" />
+      <map xref="grant_table" base="0xff000000" flags="rws" />
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw" />
     </address_space>
     <init arch_page="linux2_arch">
