@@ -1,0 +1,1 @@
+XENMEM_add_to_physmap is the hypercall for adding its mapping in Hypervisor maintained p2m table using apply_p2m_changes.However, PHIDIAS has static mapping. Hence this will be replaced by just mapping the already mapped page by PHIDIAS to kernel space using its hardcoded address.
