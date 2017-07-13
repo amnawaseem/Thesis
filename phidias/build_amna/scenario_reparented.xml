@@ -12,8 +12,8 @@
       <device id="CATCHALL" base="0xf0000000" size="0x0fff0000"/>
       <memory id="dram" base="0x00000000" size="0x80000000">
         <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram"/>
-        <memreq id="cca0" flags_demand="" flags_prevent="" size="0x100000" on="dram"/>
-        <memreq id="cca1" flags_demand="" flags_prevent="" size="0x100000" on="dram"/>
+        <memreq id="cca0" flags_demand="rwgs" flags_prevent="" size="0x100000" on="dram"/>
+        <memreq id="cca1" flags_demand="rwgs" flags_prevent="" size="0x100000" on="dram"/>
         <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" on="dram"/>
         <memreq id="core_rx" size="0x0" flags_demand="rxg" flags_prevent="wdus" on="dram"/>
         <memreq id="core_r" size="0x0" flags_demand="rg" flags_prevent="wxdus" on="dram"/>
@@ -137,6 +137,8 @@
       <map xref="blob" flags="rg"/>
       <map xref="stack" flags="rwg"/>
       <map xref="trace" flags="rwg"/>
+      <map xref="cca0" flags="rwgs"/>
+      <map xref="cca1" flags="rwgs"/>
       <map xref="xcore" flags="rwgs"/>
       <map xref="linux1_main" flags="rw" cpumap="[0]"/>
       <map xref="linux1_arch" flags="rwg" cpumap="[0]"/>
@@ -191,10 +193,14 @@
       <value type="default_mask_mem_r" value="0xffffffff"/>
       <emulate base="0xf8000000" size="0x8000"/>
     </vdev>
+    <vdev id="testing_device" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xfee00000" size="0x100000"/>
+    </vdev>
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux1_main" base="0x00000000" flags="rwx"/>
       <map xref="linux1_sram" base="0xfff80000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rs"/>
+      <map xref="cca1" base="0xfee00000" flags="rws"/>
       <map xref="cca0" base="0xfef00000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
@@ -202,7 +208,7 @@
       <copy xref="linux_kernel" dref="linux1_main" offset="0x80000"/>
       <copy xref="linux_ramdisk" dref="linux1_main" offset="0xa000000"/>
       <copy xref="linux_dtb" dref="linux1_main" offset="0x8000"/>
-      <cap type="ipc" target_xref="linux2" param="0xf"/>
+      <cap type="ipc" target_xref="linux2" param="0x9"/>
     </init>
     <entry bp_xref="linux1_main" bp_offset="0x80000"/>
     <sched class="wfq"/>
@@ -254,9 +260,13 @@
       <value type="default_mask_mem_r" value="0xffffffff"/>
       <emulate base="0xf8000000" size="0x8000"/>
     </vdev>
+    <vdev id="testing_device2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xfee00000" size="0x100000"/>
+    </vdev>
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux2_main" base="0x00000000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rs"/>
+      <map xref="cca1" base="0xfee00000" flags="rws"/>
       <map xref="cca0" base="0xfef00000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
@@ -264,7 +274,7 @@
       <copy xref="linux_kernel" dref="linux2_main" offset="0x80000"/>
       <copy xref="linux_ramdisk" dref="linux2_main" offset="0xa000000"/>
       <copy xref="linux_dtb" dref="linux2_main" offset="0x8000"/>
-      <cap type="ipc" target_xref="linux1" param="0xf"/>
+      <cap type="ipc" target_xref="linux1" param="0x9"/>
     </init>
     <entry bp_xref="linux2_main" bp_offset="0x80000"/>
     <sched class="wfq"/>

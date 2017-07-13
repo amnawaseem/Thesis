@@ -14,8 +14,8 @@
     <feature name="driver:clock" value="arm_generic" />
     <feature name="driver:irq" value="gic" />
     <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="*" />
-    <memreq id="cca0" flags_demand="" flags_prevent="" size="0x100000" />
-    <memreq id="cca1" flags_demand="" flags_prevent="" size="0x100000" />
+    <memreq id="cca0" flags_demand="rwgs" flags_prevent="" size="0x100000" />
+    <memreq id="cca1" flags_demand="rwgs" flags_prevent="" size="0x100000" />
     <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" />
     <address_space type="mmu" format="arm64:g4io40">
       <map xref="serial" flags="w" />
@@ -30,9 +30,11 @@
     <memreq id="linux1_main"  size="0x30000000" flags_demand="rw" flags_prevent="xdus" />
     <memreq id="linux1_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="*" />
     <memreq id="linux1_sram" base="0xfff80000" size="0x11000" flags_prevent="" flags_demand="" on="sram" />
+
     <vdev id="linux1_uart" type="serial" frontend="pl011" master="master">
       <emulate base="0xf7113000" size="0x1000" />
     </vdev>
+
     <vdev id="linux1_gic" type="irq_controller" frontend="arm_gic_virtext" master="master">
       <emulate base="0xf6801000" size="0x1000" />
     </vdev>
@@ -76,10 +78,16 @@
       <value type="default_mask_mem_r" value="0xffffffff" />
       <emulate base="0xf8000000" size="0x8000" />
     </vdev>
+
+    <vdev id="testing_device" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff" />
+      <emulate base="0xfee00000" size="0x100000" />
+    </vdev>
+
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux1_main" base="0x00000000" flags="rwx" />
       <map xref="linux1_sram" base="0xfff80000" flags="rwx" />
-      <map xref="cca1" base="0xfee00000" flags="rs" />
+      <map xref="cca1" base="0xfee00000" flags="rws" />
       <map xref="cca0" base="0xfef00000" flags="rws" />
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw" />
     </address_space>
@@ -87,7 +95,7 @@
       <copy xref="linux_kernel" dref="linux1_main" offset="0x80000" />
       <copy xref="linux_ramdisk" dref="linux1_main" offset="0xa000000" />
       <copy xref="linux_dtb" dref="linux1_main" offset="0x8000" />
-      <cap type="ipc" target_xref="linux2" param="0xf" /> 
+      <cap type="ipc" target_xref="linux2" param="0x9" /> 
     </init>
     <entry bp_xref="linux1_main" bp_offset="0x80000" />
     <sched class="wfq" />
@@ -95,7 +103,6 @@
   <guest id="linux2" ncpus="1" cpumap="[0]">
     <memreq id="linux2_main" size="0x30000000" flags_demand="rw" flags_prevent="xdus" />
     <memreq id="linux2_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="*" />
-
     <vdev id="linux2_uart" type="serial" frontend="pl011" master="master">
       <emulate base="0xf7113000" size="0x1000" />
     </vdev>
@@ -142,9 +149,17 @@
       <value type="default_mask_mem_r" value="0xffffffff" />
       <emulate base="0xf8000000" size="0x8000" />
     </vdev>
+
+
+    <vdev id="testing_device2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff" />
+      <emulate base="0xfee00000" size="0x100000" />
+    </vdev>
+
+
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux2_main" base="0x00000000" flags="rwx" />
-      <map xref="cca1" base="0xfee00000" flags="rs" />
+      <map xref="cca1" base="0xfee00000" flags="rws" />
       <map xref="cca0" base="0xfef00000" flags="rws" />
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw" />
     </address_space>
@@ -152,7 +167,7 @@
       <copy xref="linux_kernel" dref="linux2_main" offset="0x80000" />
       <copy xref="linux_ramdisk" dref="linux2_main" offset="0xa000000" />
       <copy xref="linux_dtb" dref="linux2_main" offset="0x8000" />
-      <cap type="ipc" target_xref="linux1" param="0xf" /> 
+      <cap type="ipc" target_xref="linux1" param="0x9" /> 
     </init>
     <entry bp_xref="linux2_main" bp_offset="0x80000" />
     <sched class="wfq" />
