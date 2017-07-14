@@ -175,7 +175,7 @@ static int xen_starting_cpu(unsigned int cpu)
 
 	err = HYPERVISOR_vcpu_op(VCPUOP_register_vcpu_info, xen_vcpu_nr(cpu),
 				 &info);
-	BUG_ON(err);
+	//BUG_ON(err);
 	per_cpu(xen_vcpu, cpu) = vcpup;
 
 	xen_setup_runstate_info(cpu);
@@ -382,7 +382,7 @@ static int __init xen_guest_init(void)
 		per_cpu(xen_vcpu_id, cpu) = cpu;
 
     //xen_auto_xlat_grant_frames.count = gnttab_max_grant_frames();
-    grant_frames = 0xff000000;
+    grant_frames = 0xfee000000;
     if (gnttab_setup_auto_xlat_frames(grant_frames))
     {
 		free_percpu(xen_vcpu_info);

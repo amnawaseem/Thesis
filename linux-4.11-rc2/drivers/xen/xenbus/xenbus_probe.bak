@@ -700,24 +700,19 @@ static int __init xenstored_local_init(void)
 {
     int err = -ENOMEM;
     unsigned long page = 0;
+    void *vaddr;
     struct evtchn_alloc_unbound alloc_unbound;
 
-    /* Allocate Xenstore page */
-	//struct page **xenstorepage = kmalloc(sizeof (*xenstorepage), GFP_KERNEL);
-	//*xenstorepage = phys_to_page(0xfee020000);
-	//page = vmap(xenstorepage, 1, VM_MAP, PAGE_KERNEL);
+	/* Allocate Xenstore page */
+	//page = get_zeroed_page(GFP_KERNEL);
 
-    //if (!page)
-		//goto out_err;
-
-
-    //page = get_zeroed_page(GFP_KERNEL);
-    //vaddr = xen_remap(0xfee020000, XEN_PAGE_SIZE);
-
-
+	vaddr = xen_remap(0xfee020000, XEN_PAGE_SIZE);
+    page = *(unsigned long *)vaddr;
+	if (!page)
+		goto out_err;
     //Clears out the xenstore region
-    //memset_io((volatile void __iomem *)vaddr, 0, PAGE_SIZE );
-	xen_store_gfn = xen_start_info->store_mfn = 0xfee020000 >> XEN_PAGE_SHIFT;
+    memset_io((volatile void __iomem *)vaddr, 0, PAGE_SIZE );
+	xen_store_gfn = xen_start_info->store_mfn = virt_to_gfn((void *)page);
 
 	/* Next allocate a local port which xenstored can bind to */
 	alloc_unbound.dom        = DOMID_SELF;
@@ -737,7 +732,7 @@ static int __init xenstored_local_init(void)
 
  out_err:
 	if (page != 0)
-		free_page(page);
+		xen_unmap(vaddr);
 	return err;
 }
 
@@ -792,9 +787,7 @@ static int __init xenbus_init(void)
 		err = xenstored_local_init();
 		if (err)
 			goto out_error;
-		xen_store_interface =
-			xen_remap(xen_store_gfn << XEN_PAGE_SHIFT,
-				  XEN_PAGE_SIZE);;
+		xen_store_interface = gfn_to_virt(xen_store_gfn);
 		break;
 	case XS_PV:
 		xen_store_evtchn = xen_start_info->store_evtchn;
