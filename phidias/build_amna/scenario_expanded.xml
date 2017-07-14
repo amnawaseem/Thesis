@@ -92,9 +92,8 @@
     <feature name="driver:clock" value="arm_generic"/>
     <feature name="driver:irq" value="gic"/>
     <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="*"/>
-    <memreq id="cca0" flags_demand="rwgs" flags_prevent="" size="0x100000"/>
-    <memreq id="cca1" flags_demand="rwgs" flags_prevent="" size="0x100000"/>
     <memreq id="grant_table" flags_demand="rwgs" flags_prevent="" size="0x20000"/>
+    <memreq id="xenstore" flags_demand="rwgs" flags_prevent="" size="0x1000"/>
     <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu"/>
     <memreq id="core_rx" size="0x0" flags_demand="rxg" flags_prevent="wdus"/>
     <memreq id="core_r" size="0x0" flags_demand="rg" flags_prevent="wxdus"/>
@@ -185,9 +184,10 @@
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux1_main" base="0x00000000" flags="rwx"/>
       <map xref="linux1_sram" base="0xfff80000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rws"/>
-      <map xref="cca0" base="0xfef00000" flags="rws"/>
-      <map xref="grant_table" base="0xff000000" flags="rws"/>
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee000000" flags="rws"/>
+      <map xref="xenstore" base="0xfee020000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
     <init arch_page="linux1_arch">
@@ -254,9 +254,10 @@
     </vdev-->
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux2_main" base="0x00000000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rws"/>
-      <map xref="cca0" base="0xfef00000" flags="rws"/>
-      <map xref="grant_table" base="0xff000000" flags="rws"/>
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee000000" flags="rws"/>
+      <map xref="xenstore" base="0xfee020000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
     <init arch_page="linux2_arch">

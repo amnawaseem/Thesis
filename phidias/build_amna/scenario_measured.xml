@@ -12,21 +12,20 @@
       <device id="CATCHALL" base="0xf0000000" size="0x0fff0000"/>
       <memory id="dram" base="0x00000000" size="0x80000000">
         <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram"/>
-        <memreq id="cca0" flags_demand="rwgs" flags_prevent="" size="0x100000" on="dram"/>
-        <memreq id="cca1" flags_demand="rwgs" flags_prevent="" size="0x100000" on="dram"/>
         <memreq id="grant_table" flags_demand="rwgs" flags_prevent="" size="0x20000" on="dram"/>
+        <memreq id="xenstore" flags_demand="rwgs" flags_prevent="" size="0x1000" on="dram"/>
         <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" on="dram"/>
         <memreq id="core_rx" size="0x9000" flags_demand="rxg" flags_prevent="wdus" on="dram" base="0x10008000"/>
         <memreq id="core_r" size="0x3000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10011000"/>
         <memreq id="core_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x10014000"/>
         <memreq id="core_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10015000"/>
         <memreq id="core_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram"/>
-        <memreq id="config_r" size="0x5000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10016000"/>
+        <memreq id="config_r" size="0x4000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10016000"/>
         <memreq id="config_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram"/>
-        <memreq id="config_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x1001c000"/>
-        <memreq id="config_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1001b000"/>
-        <memreq id="pagetables" size="0x50000" flags_demand="" flags_prevent="wxdus" on="dram" base="0x1001d000"/>
-        <memreq id="blob" size="0x136d000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1006d000"/>
+        <memreq id="config_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x1001b000"/>
+        <memreq id="config_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1001a000"/>
+        <memreq id="pagetables" size="0x50000" flags_demand="" flags_prevent="wxdus" on="dram" base="0x1001c000"/>
+        <memreq id="blob" size="0x136d000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1006c000"/>
         <memreq id="stack" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram"/>
         <memreq id="linux1_main" size="0x30000000" flags_demand="rw" flags_prevent="xdus" on="dram" cpumap="[0]"/>
         <memreq id="linux1_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram"/>
@@ -128,15 +127,14 @@
       <map xref="core_rwt" flags="rg"/>
       <map xref="core_rw" flags="rwg" base="0xf4000d000"/>
       <map xref="config_r" is_init="is_init" flags="rg" base="0xf4000e000"/>
-      <map xref="config_rw" flags="rwg" base="0xf40013000"/>
-      <map xref="config_rws" flags="rwgs" base="0xf40014000"/>
+      <map xref="config_rw" flags="rwg" base="0xf40012000"/>
+      <map xref="config_rws" flags="rwgs" base="0xf40013000"/>
       <map xref="config_rwt" flags="rg"/>
       <map xref="blob" flags="rg"/>
       <map xref="stack" flags="rwg"/>
       <map xref="trace" flags="rwg"/>
-      <map xref="cca0" flags="rwgs"/>
-      <map xref="cca1" flags="rwgs"/>
       <map xref="grant_table" flags="rwgs"/>
+      <map xref="xenstore" flags="rwgs"/>
       <map xref="xcore" flags="rwgs"/>
       <map xref="linux1_main" flags="rw" cpumap="[0]"/>
       <map xref="linux1_arch" flags="rwg" cpumap="[0]"/>
@@ -198,9 +196,10 @@
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux1_main" base="0x00000000" flags="rwx"/>
       <map xref="linux1_sram" base="0xfff80000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rws"/>
-      <map xref="cca0" base="0xfef00000" flags="rws"/>
-      <map xref="grant_table" base="0xff000000" flags="rws"/>
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee000000" flags="rws"/>
+      <map xref="xenstore" base="0xfee020000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
     <init arch_page="linux1_arch">
@@ -265,9 +264,10 @@
     </vdev-->
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux2_main" base="0x00000000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rws"/>
-      <map xref="cca0" base="0xfef00000" flags="rws"/>
-      <map xref="grant_table" base="0xff000000" flags="rws"/>
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee000000" flags="rws"/>
+      <map xref="xenstore" base="0xfee020000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
     <init arch_page="linux2_arch">
