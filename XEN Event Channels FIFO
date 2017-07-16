@@ -1,1 +1,20 @@
-I will go through the document http://xenbits.xen.org/people/dvrabel/event-channels-A.pdf
+I will go through the document http://xenbits.xen.org/people/dvrabel/event-channels-H.pdf
+Each Domain has event array composed of pages.Each page can contain 1024 events. Each event array page consists of 1024 words (each word of 32 bits) for each event channel. This event array page is shared by all VCPUs in a domain. Each VCPU in a domain has a control block (one page) which contains READY field of 32 bits in which 16 bits are used only for each priority of event queues. Now event queues are also for each VCPU. It is a singly linked list of event words. HEAD is local to guest and TAIL is local to Xen. Also HEAD is set only by Xen.
+So for PHIDIAS, there will be two pages for event words . One for each guest. Both guests can read and write to pages. 
+Also for PHIDIAS, there will be pages for each VCPU supported in guest. These will also be shared with other guests.
+Also for event queues, we will allocate a page for each VCPU shared with other guests. The hypercalls 
+Hence each VCPU has 16 event queues for each priority and a control block.
+The hypercall of init control block will be moved out of hypervisor into damain.
+Use xen_remap for mapping physical address of shared page taken from scenario.xml in Xen domain code for mapping to domain's address space.
+
+Changes
+Bounding of events will be done statically in scenario. (TBD)
+In scenario, event_control_block region of 8 pages (0x8000) is allocated since control block for each cpu is required.
+In evtchn_fifo_alloc_control_block, based on cpu number, address is remaped into domain address space. (xen_remap(0xfee021000 +(0x1000 * cpu), XEN_PAGE_SIZE);)
+Then in init_control_block, per cpu event fifo queue (16 in number) are initailzied with their heads to 0.
+Hypercall EVTCHNOP_init_control is called. Lets create a static function which will implement this hypercall functionality.
+Each event array word has a corresponding event_channel structure which contains information about ports, pending status, type of event etc. This must be allocated locally by each domain. Call evtchn_init while xen_guest_init .
+In xen_evtchn_fifo_init, lets allocate event channel bucket array for each valid event channel available to domain. evtchn_domain = malloc(EVTCHNS_PER_BUCKET * sizeof(*evtchn_domain));
+For now, we are using events channels which are equal to the number of event channels in one page.
+shared info , start info and vcpu info structures definition are copied from Xen to Guest xen.h
+Lets make a DOMID a configuration option. XEN_GUEST_DOM_ID 
