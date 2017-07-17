@@ -45,6 +45,7 @@ EXPORT_SYMBOL(xen_domain_type);
 
 struct shared_info xen_dummy_shared_info;
 struct shared_info *HYPERVISOR_shared_info = (void *)&xen_dummy_shared_info;
+unsigned long Shared_info_pages = 0;
 
 DEFINE_PER_CPU(struct vcpu_info *, xen_vcpu);
 static struct vcpu_info __percpu *xen_vcpu_info;
@@ -325,9 +326,8 @@ static void __init xen_dt_guest_init(void)
 
 static int __init xen_guest_init(void)
 {
-	struct xen_add_to_physmap xatp;
+	//struct xen_add_to_physmap xatp;
     unsigned long grant_frames;
-	struct shared_info *shared_info_page = NULL;
 	int cpu;
 
 	if (!xen_domain())
@@ -350,20 +350,20 @@ static int __init xen_guest_init(void)
 	if (efi_enabled(EFI_RUNTIME_SERVICES))
 		xen_efi_runtime_setup();
 
-	shared_info_page = (struct shared_info *)get_zeroed_page(GFP_KERNEL);
-
-	if (!shared_info_page) {
+	//shared_info_page = (struct shared_info *)get_zeroed_page(GFP_KERNEL);
+    Shared_info_pages = xen_remap(0xfee023000, XEN_PAGE_SIZE * 2);
+	if (!Shared_info_pages) {
 		pr_err("not enough memory\n");
 		return -ENOMEM;
 	}
-	xatp.domid = DOMID_SELF;
-	xatp.idx = 0;
-	xatp.space = XENMAPSPACE_shared_info;
-	xatp.gpfn = virt_to_gfn(shared_info_page);
-	if (HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xatp))
+	//xatp.domid = DOMID_SELF;
+	//xatp.idx = 0;
+	//xatp.space = XENMAPSPACE_shared_info;
+	//xatp.gpfn = virt_to_gfn(shared_info_page);
+	//if (HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xatp))
 		//BUG();
 
-	HYPERVISOR_shared_info = (struct shared_info *)shared_info_page;
+	HYPERVISOR_shared_info = (struct shared_info *)(Shared_info_pages + (XEN_PAGE_SIZE * CONFIG_XEN_DOM_ID));
 
 	/* xen_vcpu is a pointer to the vcpu_info struct in the shared_info
 	 * page, we use it in the event channel upcall and in some pvclock

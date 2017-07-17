@@ -129,7 +129,7 @@ static int init_control_block(int cpu,
 	//init_control.vcpu        = xen_vcpu_nr(cpu);
 
 	//return HYPERVISOR_event_channel_op(EVTCHNOP_init_control, &init_control);
-	
+	return 0;
 }
 
 static void free_unused_array_pages(void)
@@ -172,7 +172,7 @@ static int evtchn_fifo_setup(struct irq_info *info)
 		if (!array_page) {
 		
 			//array_page = (void *)__get_free_page(GFP_KERNEL);
-			array_page = xen_remap(0xfee021000 + (0xB000 * CONFIG_XEN_DOM_ID) + 0x9000 + event_array_pages, XEN_PAGE_SIZE););
+			array_page = xen_remap(0xfee021000 + (0xB000 * CONFIG_XEN_DOM_ID) + 0x9000 + event_array_pages, XEN_PAGE_SIZE);
 			if (array_page == NULL) {
 				ret = -ENOMEM;
 				goto error;
@@ -454,7 +454,7 @@ static inline struct evtchn *evtchn_from_port( unsigned int p)
     return NULL;
 }
 
-static void setup_ports()
+static void setup_ports(void)
 {
     unsigned int port;
 
@@ -484,9 +484,9 @@ int __init xen_evtchn_fifo_init(void)
 	int ret,i;
 
     // alloc_evtchn_bucket implementation
-    evtchn_domain = malloc(EVTCHNS_PER_BUCKET * sizeof(*evtchn_domain));
+    evtchn_domain = (struct evtchn *)__get_free_page(GFP_KERNEL);
 	if ( !evtchn_domain )
-		   return NULL;
+		   return -1;
 	
 	for ( i = 0; i < EVTCHNS_PER_BUCKET; i++ )
     {

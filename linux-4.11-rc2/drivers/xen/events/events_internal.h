@@ -71,6 +71,7 @@ struct evtchn_ops {
 
 	void (*handle_events)(unsigned cpu);
 	void (*resume)(void);
+	void(*evtchn_close)(unsigned port);
 };
 
 extern const struct evtchn_ops *evtchn_ops;

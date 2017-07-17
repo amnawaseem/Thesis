@@ -62,6 +62,7 @@
 #include "events_internal.h"
 
 const struct evtchn_ops *evtchn_ops;
+static bool fifo_events = false;
 
 /*
  * This lock protects updates to the following mapping and reference-count
@@ -457,8 +458,13 @@ static void xen_evtchn_close(unsigned int port)
 	struct evtchn_close close;
 
 	close.port = port;
-	if (HYPERVISOR_event_channel_op(EVTCHNOP_close, &close) != 0)
-		BUG();
+	if (fifo_events){
+	   if (HYPERVISOR_event_channel_op(EVTCHNOP_close, &close) != 0)
+		   BUG();
+	}else
+	{
+		evtchn_ops->evtchn_close(port);
+	}
 }
 
 static void pirq_query_unmask(int irq)
@@ -1662,7 +1668,7 @@ void xen_callback_vector(void) {}
 #undef MODULE_PARAM_PREFIX
 #define MODULE_PARAM_PREFIX "xen."
 
-static bool fifo_events = false;
+
 module_param(fifo_events, bool, 0);
 
 void __init xen_init_IRQ(void)

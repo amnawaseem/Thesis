@@ -41,6 +41,56 @@
 
 static DEFINE_PER_CPU(xen_ulong_t [EVTCHN_MASK_SIZE], cpu_evtchn_mask);
 
+struct evtchn *evtchn_domains;
+struct evtchn *evtchn_domain_local;
+
+
+static inline struct evtchn *evtchn_from_port(struct evtchn *evtchn_domain, unsigned int p)
+{
+    if ( p < EVTCHNS_PER_BUCKET )
+        return &evtchn_domain[p];
+    return NULL;
+}
+
+static inline bool port_is_valid( unsigned int p)
+{
+    if ( p >= EVTCHN_2L_NR_CHANNELS )
+        return 0;
+    return p < EVTCHNS_PER_BUCKET;
+}
+
+static void double_evtchn_lock(struct evtchn *lchn, struct evtchn *rchn)
+{
+    if ( lchn < rchn )
+    {
+        spin_lock(&lchn->lock);
+        spin_lock(&rchn->lock);
+    }
+    else
+    {
+        if ( lchn != rchn )
+            spin_lock(&rchn->lock);
+        spin_lock(&lchn->lock);
+    }
+}
+
+static void double_evtchn_unlock(struct evtchn *lchn, struct evtchn *rchn)
+{
+    spin_unlock(&lchn->lock);
+    if ( lchn != rchn )
+        spin_unlock(&rchn->lock);
+}
+
+static void free_evtchn( struct evtchn *chn)
+{
+    /* Clear pending event to avoid unexpected behavior on re-bind. */
+    evtchn_ops->clear_pending(chn);
+
+    /* Reset binding to vcpu0 when the channel is freed. */
+    chn->state          = ECS_FREE;
+    chn->notify_vcpu_id = 0;
+    chn->xen_consumer   = 0;
+}
 static unsigned evtchn_2l_max_channels(void)
 {
 	return EVTCHN_2L_NR_CHANNELS;
@@ -354,6 +404,60 @@ static void evtchn_2l_resume(void)
 				EVTCHN_2L_NR_CHANNELS/BITS_PER_EVTCHN_WORD);
 }
 
+static void evtchn_2l_close(unsigned port)
+{
+    struct evtchn *chn1, *chn2, *evtchn_domain_remote;
+	unsigned port2;
+	chn1 = evtchn_from_port(evtchn_domain_local, port);
+
+    switch ( chn1->state )
+    {
+    case ECS_FREE:
+    case ECS_RESERVED:
+	case ECS_PIRQ:
+        goto out;
+
+    case ECS_UNBOUND:
+        break;
+
+    case ECS_VIRQ:
+        break;
+
+    case ECS_IPI:
+        break;
+
+    case ECS_INTERDOMAIN:
+        port2 = chn1->u.interdomain.remote_port;
+		evtchn_domain_remote = evtchn_domains + (EVTCHNS_PER_BUCKET * chn1->u.interdomain.remote_dom) ;
+        BUG_ON(!port_is_valid(port2));
+
+        chn2 = evtchn_from_port(evtchn_domain_remote, port2);
+        BUG_ON(chn2->state != ECS_INTERDOMAIN);
+
+        double_evtchn_lock(chn1, chn2);
+
+        free_evtchn( chn1);
+
+        chn2->state = ECS_UNBOUND;
+        chn2->u.unbound.remote_domid = CONFIG_XEN_DOM_ID;
+
+        double_evtchn_unlock(chn1, chn2);
+
+        goto out;
+
+    default:
+        BUG();
+    }
+
+    spin_lock(&chn1->lock);
+    free_evtchn(chn1);
+    spin_unlock(&chn1->lock);
+
+ out:
+	return;
+
+}
+
 static const struct evtchn_ops evtchn_ops_2l = {
 	.max_channels      = evtchn_2l_max_channels,
 	.nr_channels       = evtchn_2l_max_channels,
@@ -366,10 +470,53 @@ static const struct evtchn_ops evtchn_ops_2l = {
 	.unmask            = evtchn_2l_unmask,
 	.handle_events     = evtchn_2l_handle_events,
 	.resume	           = evtchn_2l_resume,
+    .evtchn_close      = evtchn_2l_close,
 };
+
+
+static void setup_ports(void)
+{
+    unsigned int port;
+
+    /*
+     * For each port that is already bound:
+     *
+     * - save its pending state.
+     * - set default priority.
+     */
+    for ( port = 1; port < EVTCHNS_PER_BUCKET ; port++ )
+    {
+        struct evtchn *evtchn;
+		
+        evtchn = evtchn_from_port(evtchn_domain_local, port);
+
+        if (  HYPERVISOR_shared_info->evtchn_pending[port] == 1 )
+            evtchn->pending = 1;
+
+        evtchn->priority = EVTCHN_FIFO_PRIORITY_DEFAULT;
+    }
+}
 
 void __init xen_evtchn_2l_init(void)
 {
+    int i;
 	pr_info("Using 2-level ABI\n");
 	evtchn_ops = &evtchn_ops_2l;
+
+    // alloc_evtchn_bucket implementation
+    evtchn_domains = xen_remap(0xfee021000, XEN_PAGE_SIZE * 2);
+	if ( !evtchn_domains )
+		   return;
+	evtchn_domain_local = evtchn_domains + (EVTCHNS_PER_BUCKET * CONFIG_XEN_DOM_ID) ;
+    memset(evtchn_domain_local, 0, EVTCHNS_PER_BUCKET * sizeof(*evtchn_domain_local));
+    for ( i = 0; i < EVTCHNS_PER_BUCKET; i++ )
+    {
+       //Each port has an event channel structure associated with it
+       evtchn_domain_local[i].port = i;
+       spin_lock_init(&evtchn_domain_local[i].lock);
+    }
+    evtchn_from_port(evtchn_domain_local, 0)->state = ECS_RESERVED;
+	
+    setup_ports();
+
 }
