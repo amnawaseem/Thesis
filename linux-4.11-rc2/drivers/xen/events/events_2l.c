@@ -29,6 +29,7 @@
  * BITS_PER_EVTCHN_WORD as the bitmask length.
  */
 #define BITS_PER_EVTCHN_WORD (sizeof(xen_ulong_t)*8)
+
 /*
  * Make a bitmask (i.e. unsigned long *) of a xen_ulong_t
  * array. Primarily to avoid long lines (hence the terse name).
@@ -84,13 +85,14 @@ static void double_evtchn_unlock(struct evtchn *lchn, struct evtchn *rchn)
 static void free_evtchn( struct evtchn *chn)
 {
     /* Clear pending event to avoid unexpected behavior on re-bind. */
-    evtchn_ops->clear_pending(chn);
+    evtchn_ops->clear_pending(chn->port);
 
     /* Reset binding to vcpu0 when the channel is freed. */
     chn->state          = ECS_FREE;
     chn->notify_vcpu_id = 0;
     chn->xen_consumer   = 0;
 }
+
 static unsigned evtchn_2l_max_channels(void)
 {
 	return EVTCHN_2L_NR_CHANNELS;
@@ -136,11 +138,12 @@ static void evtchn_2l_unmask(unsigned port)
 {
 	struct shared_info *s = HYPERVISOR_shared_info;
 	unsigned int cpu = get_cpu();
+    unsigned int r_cpu = cpu_from_evtchn(port);
 	int do_hypercall = 0, evtchn_pending = 0;
 
 	BUG_ON(!irqs_disabled());
 
-	if (unlikely((cpu != cpu_from_evtchn(port))))
+	if (unlikely((cpu != r_cpu)))
 		do_hypercall = 1;
 	else {
 		/*
@@ -165,7 +168,22 @@ static void evtchn_2l_unmask(unsigned port)
 	 * their own implementation of irq_enable). */
 	if (do_hypercall) {
 		struct evtchn_unmask unmask = { .port = port };
-		(void)HYPERVISOR_event_channel_op(EVTCHNOP_unmask, &unmask);
+		struct vcpu_info *vcpu_info = &HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(r_cpu)];
+		int already_pending;
+
+		//(void)HYPERVISOR_event_channel_op(EVTCHNOP_unmask, &unmask);
+		//(void)evtchn_unmask(port);
+		if (!sync_test_and_set_bit(port / BITS_PER_EVTCHN_WORD,
+					   BM(&vcpu_info->evtchn_pending_sel)) )
+		{
+			already_pending = sync_test_and_set_bit(port / BITS_PER_EVTCHN_WORD, BM(&vcpu_info->evtchn_upcall_pending));
+			if ( !already_pending )
+                 vcpu_info->evtchn_upcall_pending = 1;
+		}
+		// TBD here inject IRQ to VCPU
+	// //TODO: check that the target VCPU is actually local to this physical CPU
+	// //TODO: always inject into the first VCPU of a guest?
+
 	} else {
 		struct vcpu_info *vcpu_info = __this_cpu_read(xen_vcpu);
 

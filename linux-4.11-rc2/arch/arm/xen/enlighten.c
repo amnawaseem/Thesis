@@ -176,8 +176,9 @@ static int xen_starting_cpu(unsigned int cpu)
 
 	err = HYPERVISOR_vcpu_op(VCPUOP_register_vcpu_info, xen_vcpu_nr(cpu),
 				 &info);
+	memcpy(&HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(cpu)], vcpup, sizeof(struct vcpu_info));
 	//BUG_ON(err);
-	per_cpu(xen_vcpu, cpu) = vcpup;
+	per_cpu(xen_vcpu, cpu) = &HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(cpu)];
 
 	xen_setup_runstate_info(cpu);
 

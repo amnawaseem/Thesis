@@ -249,11 +249,6 @@ DEFINE_GUEST_HANDLE_STRUCT(evtchn_op);
  */
 
 #define EVTCHN_2L_NR_CHANNELS (sizeof(xen_ulong_t) * sizeof(xen_ulong_t) * 64)
-#ifndef CONFIG_COMPAT
-#define BITS_PER_EVTCHN_WORD(d) 64
-#else
-#define BITS_PER_EVTCHN_WORD(d) 32
-#endif
 
 #define BUCKETS_PER_GROUP  (XEN_PAGE_SIZE/sizeof(struct evtchn *))
 /* Round size of struct evtchn up to power of 2 size */
