@@ -298,4 +298,9 @@ config XEN_SYMS
 config XEN_HAVE_VPMU
        bool
 
+config XEN_DOM_ID
+	int "Domain ID for guest"
+	default 0
+	help
+	  Domain ID for guest statically configured to get the guests run on PHIDIAS.
 endmenu

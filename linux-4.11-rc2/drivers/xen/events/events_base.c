@@ -1662,7 +1662,7 @@ void xen_callback_vector(void) {}
 #undef MODULE_PARAM_PREFIX
 #define MODULE_PARAM_PREFIX "xen."
 
-static bool fifo_events = true;
+static bool fifo_events = false;
 module_param(fifo_events, bool, 0);
 
 void __init xen_init_IRQ(void)

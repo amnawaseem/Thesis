@@ -10,6 +10,10 @@
 #define __XEN_PUBLIC_EVENT_CHANNEL_H__
 
 #include <xen/interface/xen.h>
+#include <xen/page.h>
+
+#include <linux/spinlock.h>
+
 
 typedef uint32_t evtchn_port_t;
 DEFINE_GUEST_HANDLE(evtchn_port_t);
@@ -245,6 +249,66 @@ DEFINE_GUEST_HANDLE_STRUCT(evtchn_op);
  */
 
 #define EVTCHN_2L_NR_CHANNELS (sizeof(xen_ulong_t) * sizeof(xen_ulong_t) * 64)
+#ifndef CONFIG_COMPAT
+#define BITS_PER_EVTCHN_WORD(d) 64
+#else
+#define BITS_PER_EVTCHN_WORD(d) 32
+#endif
+
+#define BUCKETS_PER_GROUP  (XEN_PAGE_SIZE/sizeof(struct evtchn *))
+/* Round size of struct evtchn up to power of 2 size */
+#define __RDU2(x)   (       (x) | (   (x) >> 1))
+#define __RDU4(x)   ( __RDU2(x) | ( __RDU2(x) >> 2))
+#define __RDU8(x)   ( __RDU4(x) | ( __RDU4(x) >> 4))
+#define __RDU16(x)  ( __RDU8(x) | ( __RDU8(x) >> 8))
+#define __RDU32(x)  (__RDU16(x) | (__RDU16(x) >>16))
+#define next_power_of_2(x)      (__RDU32((x)-1) + 1)
+
+/* Maximum number of event channels for any ABI. */
+#define MAX_NR_EVTCHNS MAX(EVTCHN_2L_NR_CHANNELS, EVTCHN_FIFO_NR_CHANNELS)
+
+#define EVTCHNS_PER_BUCKET (XEN_PAGE_SIZE / next_power_of_2(sizeof(struct evtchn)))
+#define EVTCHNS_PER_GROUP  (BUCKETS_PER_GROUP * EVTCHNS_PER_BUCKET)
+#define NR_EVTCHN_GROUPS   DIV_ROUND_UP(MAX_NR_EVTCHNS, EVTCHNS_PER_GROUP)
+
+#define XEN_CONSUMER_BITS 3
+#define NR_XEN_CONSUMERS ((1 << XEN_CONSUMER_BITS) - 1)
+
+struct evtchn
+{
+    spinlock_t lock;
+#define ECS_FREE         0 /* Channel is available for use.                  */
+#define ECS_RESERVED     1 /* Channel is reserved.                           */
+#define ECS_UNBOUND      2 /* Channel is waiting to bind to a remote domain. */
+#define ECS_INTERDOMAIN  3 /* Channel is bound to another domain.            */
+#define ECS_PIRQ         4 /* Channel is bound to a physical IRQ line.       */
+#define ECS_VIRQ         5 /* Channel is bound to a virtual IRQ line.        */
+#define ECS_IPI          6 /* Channel is bound to a virtual IPI line.        */
+    u8  state;             /* ECS_* */
+    u8  xen_consumer:XEN_CONSUMER_BITS; /* Consumer in Xen if nonzero */
+    u8  pending:1;
+    u16 notify_vcpu_id;    /* VCPU for local delivery notification */
+    u32 port;
+    union {
+        struct {
+            u32 remote_domid;
+        } unbound;     /* state == ECS_UNBOUND */
+        struct {
+            evtchn_port_t  remote_port;
+            u32            remote_dom;
+        } interdomain; /* state == ECS_INTERDOMAIN */
+        struct {
+            u32            irq;
+            evtchn_port_t  next_port;
+            evtchn_port_t  prev_port;
+        } pirq;        /* state == ECS_PIRQ */
+        u16 virq;      /* state == ECS_VIRQ */
+    } u;
+    u8 priority;
+    u8 last_priority;
+    u16 last_vcpu_id;
+
+} __attribute__((aligned(64)));
 
 /*
  * FIFO ABI
@@ -273,6 +337,15 @@ struct evtchn_fifo_control_block {
 	uint32_t     ready;
 	uint32_t     _rsvd;
 	event_word_t head[EVTCHN_FIFO_MAX_QUEUES];
+};
+
+#define EVTCHN_FIFO_EVENT_WORDS_PER_PAGE (XEN_PAGE_SIZE / sizeof(event_word_t))
+#define EVTCHN_FIFO_MAX_EVENT_ARRAY_PAGES \
+    (EVTCHN_FIFO_NR_CHANNELS / EVTCHN_FIFO_EVENT_WORDS_PER_PAGE)
+
+struct evtchn_fifo_domain {
+    event_word_t *event_array[EVTCHN_FIFO_MAX_EVENT_ARRAY_PAGES];
+    unsigned int num_evtchns;
 };
 
 #endif /* __XEN_PUBLIC_EVENT_CHANNEL_H__ */

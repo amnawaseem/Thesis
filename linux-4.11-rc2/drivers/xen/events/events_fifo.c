@@ -58,11 +58,21 @@
 #define MAX_EVENT_ARRAY_PAGES (EVTCHN_FIFO_NR_CHANNELS / EVENT_WORDS_PER_PAGE)
 
 struct evtchn_fifo_queue {
-	uint32_t head[EVTCHN_FIFO_MAX_QUEUES];
+    uint32_t head[EVTCHN_FIFO_MAX_QUEUES];
+    uint32_t tail;
+    uint8_t priority;
+    spinlock_t lock;
 };
 
+struct evtchn_fifo_domain __evtchn_fifo;
+
+struct evtchn_fifo_domain *evtchn_fifo = &__evtchn_fifo;
+
+struct evtchn *evtchn_domain;
+
 static DEFINE_PER_CPU(struct evtchn_fifo_control_block *, cpu_control_block);
-static DEFINE_PER_CPU(struct evtchn_fifo_queue, cpu_queue);
+static DEFINE_PER_CPU(struct evtchn_fifo_queue *, cpu_queue);
+
 static event_word_t *event_array[MAX_EVENT_ARRAY_PAGES] __read_mostly;
 static unsigned event_array_pages __read_mostly;
 
@@ -102,20 +112,24 @@ static unsigned evtchn_fifo_nr_channels(void)
 static int init_control_block(int cpu,
                               struct evtchn_fifo_control_block *control_block)
 {
-	struct evtchn_fifo_queue *q = &per_cpu(cpu_queue, cpu);
-	struct evtchn_init_control init_control;
+	struct evtchn_fifo_queue *q = per_cpu(cpu_queue, cpu);
+	//struct evtchn_init_control init_control;
 	unsigned int i;
 
+    q = xen_remap(0xfee021000 + (0xB000 * CONFIG_XEN_DOM_ID) + (0x8000) +  (sizeof(struct evtchn_fifo_queue) * cpu), sizeof(struct evtchn_fifo_queue));
 	/* Reset the control block and the local HEADs. */
 	clear_page(control_block);
-	for (i = 0; i < EVTCHN_FIFO_MAX_QUEUES; i++)
-		q->head[i] = 0;
+	for (i = 0; i < EVTCHN_FIFO_MAX_QUEUES; i++){
+        q->head[i] = 0;
+        spin_lock_init(&q->lock);
+        q->priority = i;
+    }
+	//init_control.control_gfn = virt_to_gfn(control_block);
+	//init_control.offset      = 0;
+	//init_control.vcpu        = xen_vcpu_nr(cpu);
 
-	init_control.control_gfn = virt_to_gfn(control_block);
-	init_control.offset      = 0;
-	init_control.vcpu        = xen_vcpu_nr(cpu);
-
-	return HYPERVISOR_event_channel_op(EVTCHNOP_init_control, &init_control);
+	//return HYPERVISOR_event_channel_op(EVTCHNOP_init_control, &init_control);
+	
 }
 
 static void free_unused_array_pages(void)
@@ -156,7 +170,9 @@ static int evtchn_fifo_setup(struct irq_info *info)
 		/* Might already have a page if we've resumed. */
 		array_page = event_array[event_array_pages];
 		if (!array_page) {
-			array_page = (void *)__get_free_page(GFP_KERNEL);
+		
+			//array_page = (void *)__get_free_page(GFP_KERNEL);
+			array_page = xen_remap(0xfee021000 + (0xB000 * CONFIG_XEN_DOM_ID) + 0x9000 + event_array_pages, XEN_PAGE_SIZE););
 			if (array_page == NULL) {
 				ret = -ENOMEM;
 				goto error;
@@ -284,7 +300,7 @@ static void consume_one_event(unsigned cpu,
 			      unsigned priority, unsigned long *ready,
 			      bool drop)
 {
-	struct evtchn_fifo_queue *q = &per_cpu(cpu_queue, cpu);
+	struct evtchn_fifo_queue *q = per_cpu(cpu_queue, cpu);
 	uint32_t head;
 	unsigned port;
 	event_word_t *word;
@@ -400,7 +416,8 @@ static int evtchn_fifo_alloc_control_block(unsigned cpu)
 	void *control_block = NULL;
 	int ret = -ENOMEM;
 
-	control_block = (void *)__get_free_page(GFP_KERNEL);
+	//control_block = (void *)__get_free_page(GFP_KERNEL);
+	control_block  = xen_remap(0xfee021000 + (0xB000 * CONFIG_XEN_DOM_ID) + (0x1000 * cpu), XEN_PAGE_SIZE);
 	if (control_block == NULL)
 		goto error;
 
@@ -430,11 +447,55 @@ static int xen_evtchn_cpu_dead(unsigned int cpu)
 	return 0;
 }
 
+static inline struct evtchn *evtchn_from_port( unsigned int p)
+{
+    if ( p < EVTCHNS_PER_BUCKET )
+        return &evtchn_domain[p];
+    return NULL;
+}
+
+static void setup_ports()
+{
+    unsigned int port;
+
+    /*
+     * For each port that is already bound:
+     *
+     * - save its pending state.
+     * - set default priority.
+     */
+    for ( port = 1; port < EVTCHNS_PER_BUCKET ; port++ )
+    {
+        struct evtchn *evtchn;
+		
+        evtchn = evtchn_from_port(port);
+
+        if (  HYPERVISOR_shared_info->evtchn_pending[port] == 1 )
+            evtchn->pending = 1;
+
+        evtchn->priority = EVTCHN_FIFO_PRIORITY_DEFAULT;
+    }
+}
+
+
 int __init xen_evtchn_fifo_init(void)
 {
 	int cpu = get_cpu();
-	int ret;
+	int ret,i;
 
+    // alloc_evtchn_bucket implementation
+    evtchn_domain = malloc(EVTCHNS_PER_BUCKET * sizeof(*evtchn_domain));
+	if ( !evtchn_domain )
+		   return NULL;
+	
+	for ( i = 0; i < EVTCHNS_PER_BUCKET; i++ )
+    {
+       //Each port has an event channel structure associated with it
+       evtchn_domain[i].port = i;
+       spin_lock_init(&evtchn_domain[i].lock);
+    }
+    evtchn_from_port(0)->state = ECS_RESERVED;
+	
 	ret = evtchn_fifo_alloc_control_block(cpu);
 	if (ret < 0)
 		goto out;
@@ -442,7 +503,7 @@ int __init xen_evtchn_fifo_init(void)
 	pr_info("Using FIFO-based ABI\n");
 
 	evtchn_ops = &evtchn_ops_fifo;
-
+    setup_ports();
 	cpuhp_setup_state_nocalls(CPUHP_XEN_EVTCHN_PREPARE,
 				  "xen/evtchn:prepare",
 				  xen_evtchn_cpu_prepare, xen_evtchn_cpu_dead);
