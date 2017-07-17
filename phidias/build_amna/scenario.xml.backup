@@ -2,10 +2,6 @@
 <!DOCTYPE scenario SYSTEM "xml/dtd">
 <scenario version="1.00" cbi="phidias" image="raw">
   <platform board="hikey" arch="arm64" />
-  <!-- Boot this setup with:
-	./hisi-idt.py -d /dev/ttyUSB1 \-\-img1 .../l-loader/l-loader.bin
-	fastboot boot $BUILD/hikey/image exec_base="0xf40000000" 
-   -->
   <hypervisor ncpus="2" load_base="0x10008000" exec_base="0xf40000000" ccprefix="aarch64-linux-gnu-">
     <feature name="multiplexer" value="yes" />
     <feature name="debugger" value="yes" />
@@ -14,8 +10,18 @@
     <feature name="driver:clock" value="arm_generic" />
     <feature name="driver:irq" value="gic" />
     <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="*" />
-    <memreq id="cca0" flags_demand="" flags_prevent="" size="0x100000" />
-    <memreq id="cca1" flags_demand="" flags_prevent="" size="0x100000" />
+    <!--memreq id="cca0" flags_demand="rwgs" flags_prevent="" size="0x100000" /-->
+    <!--memreq id="cca1" flags_demand="rwgs" flags_prevent="" size="0x100000" /-->
+    <memreq id="grant_table" flags_demand="rwgs" flags_prevent="" size="0x20000" />
+    <memreq id="xenstore" flags_demand="rwgs" flags_prevent="" size="0x1000" />
+    <memreq id="event_control_block_1" flags_demand="rwgs" flags_prevent="" size="0x8000" />
+    <memreq id="event_fifo_queues_1" flags_demand="rwgs" flags_prevent="" size="0x1000" />
+    <memreq id="event_array_words_1" flags_demand="rwgs" flags_prevent="" size="0x1000" />
+    <memreq id="event_channel_domain_1" flags_demand="rwgs" flags_prevent="" size="0x1000" />
+    <memreq id="event_control_block_2" flags_demand="rwgs" flags_prevent="" size="0x8000" />
+    <memreq id="event_fifo_queues_2" flags_demand="rwgs" flags_prevent="" size="0x1000" />
+    <memreq id="event_array_words_2" flags_demand="rwgs" flags_prevent="" size="0x1000" />
+    <memreq id="event_channel_domain_2" flags_demand="rwgs" flags_prevent="" size="0x1000" />
     <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" />
     <address_space type="mmu" format="arm64:g4io40">
       <map xref="serial" flags="w" />
@@ -30,9 +36,11 @@
     <memreq id="linux1_main"  size="0x30000000" flags_demand="rw" flags_prevent="xdus" />
     <memreq id="linux1_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="*" />
     <memreq id="linux1_sram" base="0xfff80000" size="0x11000" flags_prevent="" flags_demand="" on="sram" />
+
     <vdev id="linux1_uart" type="serial" frontend="pl011" master="master">
       <emulate base="0xf7113000" size="0x1000" />
     </vdev>
+
     <vdev id="linux1_gic" type="irq_controller" frontend="arm_gic_virtext" master="master">
       <emulate base="0xf6801000" size="0x1000" />
     </vdev>
@@ -76,11 +84,27 @@
       <value type="default_mask_mem_r" value="0xffffffff" />
       <emulate base="0xf8000000" size="0x8000" />
     </vdev>
+
+    <!--vdev id="testing_device" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff" />
+      <emulate base="0xfee00000" size="0x100000" />
+    </vdev-->
+
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux1_main" base="0x00000000" flags="rwx" />
       <map xref="linux1_sram" base="0xfff80000" flags="rwx" />
-      <map xref="cca1" base="0xfee00000" flags="rs" />
-      <map xref="cca0" base="0xfef00000" flags="rws" />
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee000000" flags="rws" />
+      <map xref="xenstore" base="0xfee020000" flags="rws" />
+      <map xref="event_control_block_1" base="0xfee021000" flags="rws" />
+      <map xref="event_fifo_queues_1" base="0xfee028000" flags="rws" />
+      <map xref="event_array_words_1" base="0xfee029000" flags="rws" />
+      <map xref="event_channel_domain_1" base="0xfee02a000" flags="rws" />
+      <map xref="event_control_block_2" base="0xfee02b000" flags="rws" />
+      <map xref="event_fifo_queues_2" base="0xfee033000" flags="rws" />
+      <map xref="event_array_words_2" base="0xfee034000" flags="rws" />
+      <map xref="event_channel_domain_2" base="0xfee035000" flags="rws" />
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw" />
     </address_space>
     <init arch_page="linux1_arch">
@@ -95,7 +119,6 @@
   <guest id="linux2" ncpus="1" cpumap="[0]">
     <memreq id="linux2_main" size="0x30000000" flags_demand="rw" flags_prevent="xdus" />
     <memreq id="linux2_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="*" />
-
     <vdev id="linux2_uart" type="serial" frontend="pl011" master="master">
       <emulate base="0xf7113000" size="0x1000" />
     </vdev>
@@ -142,10 +165,27 @@
       <value type="default_mask_mem_r" value="0xffffffff" />
       <emulate base="0xf8000000" size="0x8000" />
     </vdev>
+
+    <!--vdev id="testing_device2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff" />
+      <emulate base="0xfee00000" size="0x100000" />
+    </vdev-->
+
+
     <address_space type="mmu" format="arm64:g4io40n">
       <map xref="linux2_main" base="0x00000000" flags="rwx" />
-      <map xref="cca1" base="0xfee00000" flags="rs" />
-      <map xref="cca0" base="0xfef00000" flags="rws" />
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee000000" flags="rws" />
+      <map xref="xenstore" base="0xfee020000" flags="rws" />
+      <map xref="event_control_block_1" base="0xfee021000" flags="rws" />
+      <map xref="event_fifo_queues_1" base="0xfee028000" flags="rws" />
+      <map xref="event_array_words_1" base="0xfee029000" flags="rws" />
+      <map xref="event_channel_domain_1" base="0xfee02a000" flags="rws" />
+      <map xref="event_control_block_2" base="0xfee02b000" flags="rws" />
+      <map xref="event_fifo_queues_2" base="0xfee033000" flags="rws" />
+      <map xref="event_array_words_2" base="0xfee034000" flags="rws" />
+      <map xref="event_channel_domain_2" base="0xfee035000" flags="rws" />
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw" />
     </address_space>
     <init arch_page="linux2_arch">
