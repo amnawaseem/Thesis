@@ -10,3 +10,15 @@ After initializing xen_evtchn_2l_init, all event channels bits in shared info ar
 Now lets implement hypercalls.
 In Events_base.c 
 EVTCHNOP_close is called. For Events 2l, I have added function to close event channel in ops evtchn_close
+evtchn_2l_unmask is also implemented. NOte: For now, we will consider one vcpu inside a guest. This will make things simpler.
+For now, we will not consider PIRQ related event channels binding i.e EVTCHNOP_bind_pirq
+For now, we will also not consider IPI related event channels. i.e. EVTCHNOP_bind_ipi
+For now, we will also not consider EVTCHNOP_bind_virq 
+Lets just focus on bind_interdomain_evtchn_to_irq which calls EVTCHNOP_bind_interdomain
+For now, find _virq calls EVTCHNOP_status hypercall. May be we can ignore it for now.
+EVTCHNOP_set_priority is called by xen setup timer for VIRQ. We will igore it for now.
+EVTCHNOP_bind_vcpu is used for VCPUS for IPI. We will ignore it for now
+EVTCHNOP_expand_array is used by FIFO ABI. Not important for 2L
+EVTCHNOP_alloc_unbound is useful Hypercall used by Xen bus driver and xen bus clients. Changes for it are required in Xenbus_client.c ,Xenbus_dev_backend.c, Xenbus_probe.c .long evtchn_alloc_unbound(struct evtchn_alloc_unbound *alloc) is implemented in events_base.c and exported to public use. Other drivers can call now this function in their code instead of hypercall.
+Replace Hypercalls to EVTCHNOP_Close by xen_evtchn_close. I have made this function global exported.
+Now most important Hypercall EVTCHNOP_send. It is called from static function notify_remote_via_evtchn in events.h file. evtchn_send is implemented in events_base.c 
