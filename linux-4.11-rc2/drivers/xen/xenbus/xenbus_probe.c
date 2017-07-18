@@ -723,15 +723,15 @@ static int __init xenstored_local_init(void)
 	alloc_unbound.dom        = DOMID_SELF;
 	alloc_unbound.remote_dom = DOMID_SELF;
 
-	err = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound,
-					  &alloc_unbound);
+	//err = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound,
+					  //&alloc_unbound);
+    err = evtchn_alloc_unbound(&alloc_unbound);
 	if (err == -ENOSYS)
 		goto out_err;
 
-	//BUG_ON(err);
-	//xen_store_evtchn = xen_start_info->store_evtchn =
-		//alloc_unbound.port;
-	xen_store_evtchn = xen_start_info->store_evtchn = 10;
+	BUG_ON(err);
+	xen_store_evtchn = xen_start_info->store_evtchn =
+		alloc_unbound.port;
 
 	return 0;
 

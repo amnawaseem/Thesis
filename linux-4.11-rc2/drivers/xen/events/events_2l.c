@@ -88,9 +88,8 @@ static int evtchn_2l_get_free_port(void )
             return -ENOSPC;
 		if ( evtchn_from_port(evtchn_domain_local, port)->state == ECS_FREE )
             return port; 
-		else
-			return -ENOSPC;
     }
+    return -ENOSPC;
 }
 static unsigned evtchn_2l_max_channels(void)
 {
@@ -166,7 +165,7 @@ static void evtchn_2l_unmask(unsigned port)
 	 * an hvm domain and an event is pending (hvm domains don't have
 	 * their own implementation of irq_enable). */
 	if (do_hypercall) {
-		struct evtchn_unmask unmask = { .port = port };
+		//struct evtchn_unmask unmask = { .port = port };
 		struct vcpu_info *vcpu_info = &HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(r_cpu)];
 		int already_pending;
 

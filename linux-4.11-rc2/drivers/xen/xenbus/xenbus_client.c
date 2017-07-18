@@ -401,8 +401,9 @@ int xenbus_alloc_evtchn(struct xenbus_device *dev, int *port)
 	alloc_unbound.dom = DOMID_SELF;
 	alloc_unbound.remote_dom = dev->otherend_id;
 
-	err = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound,
-					  &alloc_unbound);
+	//err = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound,
+					  //&alloc_unbound);
+    err = evtchn_alloc_unbound(&alloc_unbound);
 	if (err)
 		xenbus_dev_fatal(dev, err, "allocating event channel");
 	else
@@ -419,11 +420,12 @@ EXPORT_SYMBOL_GPL(xenbus_alloc_evtchn);
 int xenbus_free_evtchn(struct xenbus_device *dev, int port)
 {
 	struct evtchn_close close;
-	int err;
+	int err ;
 
 	close.port = port;
 
-	err = HYPERVISOR_event_channel_op(EVTCHNOP_close, &close);
+	//err = HYPERVISOR_event_channel_op(EVTCHNOP_close, &close);
+	err = xen_evtchn_close(close.port);
 	if (err)
 		xenbus_dev_error(dev, err, "freeing event channel %d", port);
 

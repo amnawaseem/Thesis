@@ -66,7 +66,7 @@ static bool fifo_events = false;
 
 extern struct evtchn *evtchn_domains;
 extern struct evtchn *evtchn_domain_local;
-
+extern unsigned long Shared_info_pages ;
 /*
  * This lock protects updates to the following mapping and reference-count
  * arrays. The lock does not need to be acquired to read the mapping tables.
@@ -93,6 +93,8 @@ static bool (*pirq_needs_eoi)(unsigned irq);
 
 /* Xen will never allocate port zero for any purpose. */
 #define VALID_EVTCHN(chn)	((chn) != 0)
+
+#define BM(x) (unsigned long *)(x)
 
 static struct irq_chip xen_dynamic_chip;
 static struct irq_chip xen_percpu_chip;
@@ -456,7 +458,7 @@ static void xen_free_irq(unsigned irq)
 	irq_free_desc(irq);
 }
 
-static void xen_evtchn_close(unsigned int port)
+int xen_evtchn_close(unsigned int port)
 {
 	struct evtchn_close close;
 
@@ -464,11 +466,73 @@ static void xen_evtchn_close(unsigned int port)
 	if (fifo_events){
 	   if (HYPERVISOR_event_channel_op(EVTCHNOP_close, &close) != 0)
            BUG();
-	}else
+	}
+    else
 	{
 		evtchn_ops->evtchn_close(port);
 	}
+    return 0;
 }
+static void vcpu_mark_events_pending(struct shared_info *s, uint16_t notify_cpu_id )
+{
+    unsigned int val = 0;
+    struct vcpu_info *vcpu_info = &(s->vcpu_info[notify_cpu_id]);
+    int already_pending = sync_test_and_set_bit(
+        0, BM(&vcpu_info->evtchn_upcall_pending));
+    
+
+    if ( already_pending )
+        return;
+
+    //vgic_vcpu_inject_irq(v, v->domain->arch.evtchn_irq);
+   asm volatile("mov x0, #0x9999\n\tmov x1, %0\n\thvc #0" :: "r" (val) : "x0", "x1");
+}
+
+
+EXPORT_SYMBOL_GPL(xen_evtchn_close);
+
+int evtchn_send(unsigned int lport)
+{
+    struct evtchn *lchn, *rchn;
+    int            rport, ret = 0;
+    unsigned int rd;
+    struct shared_info *s ;
+    struct evtchn *remote_event_channel;
+    if ( !port_is_valid(lport) )
+        return -EINVAL;
+
+    lchn = evtchn_from_port(evtchn_domain_local, lport);
+  
+    spin_lock(&lchn->lock);
+
+    switch ( lchn->state )
+    {
+    case ECS_INTERDOMAIN:
+        rd    = lchn->u.interdomain.remote_dom;
+        rport = lchn->u.interdomain.remote_port;
+        remote_event_channel = (struct evtchn *)(evtchn_domains + (rd * EVTCHNS_PER_BUCKET));
+        rchn = evtchn_from_port(remote_event_channel, rport);
+        s = (struct shared_info *)(Shared_info_pages + (XEN_PAGE_SIZE * rd));
+	    sync_set_bit(rport, BM(&s->evtchn_pending[0]));
+        vcpu_mark_events_pending(s,rchn->notify_vcpu_id);
+        
+    case ECS_IPI:
+        s = (struct shared_info *)(Shared_info_pages + (XEN_PAGE_SIZE * CONFIG_XEN_DOM_ID));
+        sync_set_bit(lchn->port, BM(&s->evtchn_pending[0]));
+        vcpu_mark_events_pending(s,lchn->notify_vcpu_id);
+        break;
+    case ECS_UNBOUND:
+        /* silently drop the notification */
+        break;
+    default:
+        ret = -EINVAL;
+    }
+
+    spin_unlock(&lchn->lock);
+
+    return ret;
+}
+EXPORT_SYMBOL_GPL(evtchn_send);
 
 static void pirq_query_unmask(int irq)
 {
@@ -966,6 +1030,24 @@ int bind_interdomain_evtchn_to_irq(unsigned int remote_domain,
     return err ? : bind_evtchn_to_irq(bind_interdomain.local_port);
 }
 EXPORT_SYMBOL_GPL(bind_interdomain_evtchn_to_irq);
+
+long evtchn_alloc_unbound(struct evtchn_alloc_unbound *alloc)
+{
+    struct evtchn *lchn;
+    unsigned int local_port;
+    
+    local_port = evtchn_ops->get_free_port();
+    if(local_port < 0)
+         return -ENOSYS;
+    lchn = evtchn_from_port(evtchn_domain_local, local_port);
+
+    lchn->state = ECS_UNBOUND;
+    if ( (lchn->u.unbound.remote_domid = alloc->remote_dom) == DOMID_SELF )
+        lchn->u.unbound.remote_domid = CONFIG_XEN_DOM_ID;
+    alloc->port = local_port;
+    return 0;
+}
+EXPORT_SYMBOL_GPL(evtchn_alloc_unbound);
 
 static int find_virq(unsigned int virq, unsigned int cpu)
 {

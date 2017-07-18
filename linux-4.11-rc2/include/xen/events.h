@@ -37,6 +37,10 @@ int bind_interdomain_evtchn_to_irqhandler(unsigned int remote_domain,
 					  const char *devname,
 					  void *dev_id);
 
+long evtchn_alloc_unbound(struct evtchn_alloc_unbound *alloc);
+int xen_evtchn_close(unsigned int port);
+int evtchn_send(unsigned int lport);
+
 /*
  * Common unbind function for all event sources. Takes IRQ to unbind from.
  * Automatically closes the underlying event channel (even for bindings
@@ -61,8 +65,9 @@ void rebind_evtchn_irq(int evtchn, int irq);
 
 static inline void notify_remote_via_evtchn(int port)
 {
-	struct evtchn_send send = { .port = port };
-	(void)HYPERVISOR_event_channel_op(EVTCHNOP_send, &send);
+	//struct evtchn_send send = { .port = port };
+	//(void)HYPERVISOR_event_channel_op(EVTCHNOP_send, &send);
+	(void)evtchn_send(port);
 }
 
 void notify_remote_via_irq(int irq);

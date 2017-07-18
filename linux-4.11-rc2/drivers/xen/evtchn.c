@@ -509,8 +509,9 @@ static long evtchn_ioctl(struct file *file,
 
 		alloc_unbound.dom        = DOMID_SELF;
 		alloc_unbound.remote_dom = bind.remote_domain;
-		rc = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound,
-						 &alloc_unbound);
+		//rc = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound,
+						// &alloc_unbound);
+        rc = evtchn_alloc_unbound(&alloc_unbound);
 		if (rc != 0)
 			break;
 

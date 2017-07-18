@@ -52,7 +52,8 @@ static long xenbus_alloc(domid_t domid)
 	arg.dom = DOMID_SELF;
 	arg.remote_dom = domid;
 
-	err = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound, &arg);
+	//err = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound, &arg);
+    err = evtchn_alloc_unbound(&arg);
 	if (err)
 		goto out_err;
 

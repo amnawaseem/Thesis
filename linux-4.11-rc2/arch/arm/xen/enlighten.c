@@ -45,7 +45,7 @@ EXPORT_SYMBOL(xen_domain_type);
 
 struct shared_info xen_dummy_shared_info;
 struct shared_info *HYPERVISOR_shared_info = (void *)&xen_dummy_shared_info;
-unsigned long Shared_info_pages = 0;
+unsigned long Shared_info_pages;
 
 DEFINE_PER_CPU(struct vcpu_info *, xen_vcpu);
 static struct vcpu_info __percpu *xen_vcpu_info;
