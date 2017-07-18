@@ -1,0 +1,12 @@
+For Event channels 2L ABI, only shared_info page and event channel struct domain for each domain is shared with other domains hence we can create a shared space and divide it among shared_info pages for each guest based on their DOM_ID
+Also event channel domain structures will be shared using on large shared memory and dividing it among domains.
+    <memreq id="event_domains" flags_demand="rwgs" flags_prevent="" size="0x2000" />
+    <memreq id="shared_info" flags_demand="rwgs" flags_prevent="" size="0x2000" />
+    <map xref="event_domains" base="0xfee021000" flags="rws" />
+    <map xref="shared_info" base="0xfee023000" flags="rws" />
+evtchn_domain_local is the local domain structure . evtchn_domains is  the shared event domains pages containing infomration about all others including itself.
+HYPERVISOR_shared_info is the local shared info page. Global shared info page of all domains is contained in Shared_info_pages
+After initializing xen_evtchn_2l_init, all event channels bits in shared info are masked. In shared info page, there are 4096 ports or event channels bits i.e. an array of 64 elements with each element of 64 bits ( 64 * 64 = 4096). Each bit corresponds to a port or event channel. 
+Now lets implement hypercalls.
+In Events_base.c 
+EVTCHNOP_close is called. For Events 2l, I have added function to close event channel in ops evtchn_close
