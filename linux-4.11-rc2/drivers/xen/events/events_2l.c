@@ -45,21 +45,6 @@ static DEFINE_PER_CPU(xen_ulong_t [EVTCHN_MASK_SIZE], cpu_evtchn_mask);
 struct evtchn *evtchn_domains;
 struct evtchn *evtchn_domain_local;
 
-
-static inline struct evtchn *evtchn_from_port(struct evtchn *evtchn_domain, unsigned int p)
-{
-    if ( p < EVTCHNS_PER_BUCKET )
-        return &evtchn_domain[p];
-    return NULL;
-}
-
-static inline bool port_is_valid( unsigned int p)
-{
-    if ( p >= EVTCHN_2L_NR_CHANNELS )
-        return 0;
-    return p < EVTCHNS_PER_BUCKET;
-}
-
 static void double_evtchn_lock(struct evtchn *lchn, struct evtchn *rchn)
 {
     if ( lchn < rchn )
@@ -93,6 +78,20 @@ static void free_evtchn( struct evtchn *chn)
     chn->xen_consumer   = 0;
 }
 
+static int evtchn_2l_get_free_port(void )
+{
+    int port;
+
+    for ( port = 0; port_is_valid( port); port++ )
+    {
+        if ( port > EVTCHNS_PER_BUCKET)
+            return -ENOSPC;
+		if ( evtchn_from_port(evtchn_domain_local, port)->state == ECS_FREE )
+            return port; 
+		else
+			return -ENOSPC;
+    }
+}
 static unsigned evtchn_2l_max_channels(void)
 {
 	return EVTCHN_2L_NR_CHANNELS;
@@ -489,6 +488,7 @@ static const struct evtchn_ops evtchn_ops_2l = {
 	.handle_events     = evtchn_2l_handle_events,
 	.resume	           = evtchn_2l_resume,
     .evtchn_close      = evtchn_2l_close,
+    .get_free_port     = evtchn_2l_get_free_port,
 };
 
 

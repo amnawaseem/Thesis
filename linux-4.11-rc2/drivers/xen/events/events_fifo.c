@@ -63,6 +63,8 @@ struct evtchn_fifo_queue {
     uint8_t priority;
     spinlock_t lock;
 };
+extern struct evtchn *evtchn_domains;
+extern struct evtchn *evtchn_domain_local;
 
 struct evtchn_fifo_domain __evtchn_fifo;
 
@@ -447,13 +449,6 @@ static int xen_evtchn_cpu_dead(unsigned int cpu)
 	return 0;
 }
 
-static inline struct evtchn *evtchn_from_port( unsigned int p)
-{
-    if ( p < EVTCHNS_PER_BUCKET )
-        return &evtchn_domain[p];
-    return NULL;
-}
-
 static void setup_ports(void)
 {
     unsigned int port;
@@ -468,7 +463,7 @@ static void setup_ports(void)
     {
         struct evtchn *evtchn;
 		
-        evtchn = evtchn_from_port(port);
+        evtchn = evtchn_from_port(evtchn_domain_local, port);
 
         if (  HYPERVISOR_shared_info->evtchn_pending[port] == 1 )
             evtchn->pending = 1;
@@ -484,17 +479,17 @@ int __init xen_evtchn_fifo_init(void)
 	int ret,i;
 
     // alloc_evtchn_bucket implementation
-    evtchn_domain = (struct evtchn *)__get_free_page(GFP_KERNEL);
-	if ( !evtchn_domain )
+    evtchn_domains = (struct evtchn *)__get_free_page(GFP_KERNEL);
+	if ( !evtchn_domains )
 		   return -1;
 	
 	for ( i = 0; i < EVTCHNS_PER_BUCKET; i++ )
     {
        //Each port has an event channel structure associated with it
-       evtchn_domain[i].port = i;
-       spin_lock_init(&evtchn_domain[i].lock);
+       evtchn_domain_local[i].port = i;
+       spin_lock_init(&evtchn_domain_local[i].lock);
     }
-    evtchn_from_port(0)->state = ECS_RESERVED;
+    evtchn_from_port(evtchn_domain_local, 0)->state = ECS_RESERVED;
 	
 	ret = evtchn_fifo_alloc_control_block(cpu);
 	if (ret < 0)

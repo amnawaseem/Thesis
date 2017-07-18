@@ -352,7 +352,7 @@ static int __init xen_guest_init(void)
 		xen_efi_runtime_setup();
 
 	//shared_info_page = (struct shared_info *)get_zeroed_page(GFP_KERNEL);
-    Shared_info_pages = xen_remap(0xfee023000, XEN_PAGE_SIZE * 2);
+    Shared_info_pages = (unsigned long)xen_remap(0xfee023000, XEN_PAGE_SIZE * 2);
 	if (!Shared_info_pages) {
 		pr_err("not enough memory\n");
 		return -ENOMEM;

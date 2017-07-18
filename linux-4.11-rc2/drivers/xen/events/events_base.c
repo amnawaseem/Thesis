@@ -64,6 +64,9 @@
 const struct evtchn_ops *evtchn_ops;
 static bool fifo_events = false;
 
+extern struct evtchn *evtchn_domains;
+extern struct evtchn *evtchn_domain_local;
+
 /*
  * This lock protects updates to the following mapping and reference-count
  * arrays. The lock does not need to be acquired to read the mapping tables.
@@ -111,7 +114,7 @@ static void clear_evtchn_to_irq_all(void)
 
 	for (row = 0; row < EVTCHN_ROW(xen_evtchn_max_channels()); row++) {
 		if (evtchn_to_irq[row] == NULL)
-			continue;
+    	continue;
 		clear_evtchn_to_irq_row(row);
 	}
 }
@@ -128,13 +131,13 @@ static int set_evtchn_to_irq(unsigned evtchn, unsigned irq)
 	col = EVTCHN_COL(evtchn);
 
 	if (evtchn_to_irq[row] == NULL) {
-		/* Unallocated irq entries return -1 anyway */
+    /* Unallocated irq entries return -1 anyway */
 		if (irq == -1)
-			return 0;
+    	return 0;
 
 		evtchn_to_irq[row] = (int *)get_zeroed_page(GFP_KERNEL);
 		if (evtchn_to_irq[row] == NULL)
-			return -ENOMEM;
+        	return -ENOMEM;
 
 		clear_evtchn_to_irq_row(row);
 	}
@@ -160,10 +163,10 @@ struct irq_info *info_for_irq(unsigned irq)
 
 /* Constructors for packed IRQ information. */
 static int xen_irq_info_common_setup(struct irq_info *info,
-				     unsigned irq,
-				     enum xen_irq_type type,
-				     unsigned evtchn,
-				     unsigned short cpu)
+                     unsigned irq,
+                     enum xen_irq_type type,
+                     unsigned evtchn,
+                     unsigned short cpu)
 {
 	int ret;
 
@@ -184,7 +187,7 @@ static int xen_irq_info_common_setup(struct irq_info *info,
 }
 
 static int xen_irq_info_evtchn_setup(unsigned irq,
-				     unsigned evtchn)
+                     unsigned evtchn)
 {
 	struct irq_info *info = info_for_irq(irq);
 
@@ -192,9 +195,9 @@ static int xen_irq_info_evtchn_setup(unsigned irq,
 }
 
 static int xen_irq_info_ipi_setup(unsigned cpu,
-				  unsigned irq,
-				  unsigned evtchn,
-				  enum ipi_vector ipi)
+                  unsigned irq,
+                  unsigned evtchn,
+                  enum ipi_vector ipi)
 {
 	struct irq_info *info = info_for_irq(irq);
 
@@ -206,9 +209,9 @@ static int xen_irq_info_ipi_setup(unsigned cpu,
 }
 
 static int xen_irq_info_virq_setup(unsigned cpu,
-				   unsigned irq,
-				   unsigned evtchn,
-				   unsigned virq)
+                   unsigned irq,
+                   unsigned evtchn,
+                   unsigned virq)
 {
 	struct irq_info *info = info_for_irq(irq);
 
@@ -220,11 +223,11 @@ static int xen_irq_info_virq_setup(unsigned cpu,
 }
 
 static int xen_irq_info_pirq_setup(unsigned irq,
-				   unsigned evtchn,
-				   unsigned pirq,
-				   unsigned gsi,
-				   uint16_t domid,
-				   unsigned char flags)
+                   unsigned evtchn,
+                   unsigned pirq,
+                   unsigned gsi,
+                   uint16_t domid,
+                   unsigned char flags)
 {
 	struct irq_info *info = info_for_irq(irq);
 
@@ -395,7 +398,7 @@ static int __must_check xen_allocate_irqs_dynamic(int nvec)
 
 	if (irq >= 0) {
 		for (i = 0; i < nvec; i++)
-			xen_irq_init(irq + i);
+        	xen_irq_init(irq + i);
 	}
 
 	return irq;
@@ -460,7 +463,7 @@ static void xen_evtchn_close(unsigned int port)
 	close.port = port;
 	if (fifo_events){
 	   if (HYPERVISOR_event_channel_op(EVTCHNOP_close, &close) != 0)
-		   BUG();
+           BUG();
 	}else
 	{
 		evtchn_ops->evtchn_close(port);
@@ -926,16 +929,41 @@ static int bind_ipi_to_irq(unsigned int ipi, unsigned int cpu)
 int bind_interdomain_evtchn_to_irq(unsigned int remote_domain,
 				   unsigned int remote_port)
 {
-	struct evtchn_bind_interdomain bind_interdomain;
-	int err;
+    struct evtchn_bind_interdomain bind_interdomain;
+    int err;
+    struct evtchn *lchn, *rchn;
+    struct evtchn *remote_event_channel;
+    unsigned int local_port;
+    bind_interdomain.remote_dom  = remote_domain;
+    bind_interdomain.remote_port = remote_port;
+    remote_event_channel = (struct evtchn *)(evtchn_domains + (remote_domain * EVTCHNS_PER_BUCKET));
+    if (fifo_events)
+        err = HYPERVISOR_event_channel_op(EVTCHNOP_bind_interdomain,
+                        &bind_interdomain);
+    else
+    {
+        local_port = evtchn_ops->get_free_port();
+        if(local_port < 0)
+            return -EINVAL;
+        lchn = evtchn_from_port(evtchn_domain_local, local_port);
+        if ( !port_is_valid(remote_port) )
+            return -EINVAL;
+        rchn = evtchn_from_port(remote_event_channel,remote_port );
+        if ( (rchn->state != ECS_UNBOUND) ||
+				 (rchn->u.unbound.remote_domid != CONFIG_XEN_DOM_ID) )
+            return -EINVAL;	
+        lchn->u.interdomain.remote_dom  = remote_domain;
+        lchn->u.interdomain.remote_port = remote_port;
+        lchn->state                     = ECS_INTERDOMAIN;
 
-	bind_interdomain.remote_dom  = remote_domain;
-	bind_interdomain.remote_port = remote_port;
+        rchn->u.interdomain.remote_dom  = CONFIG_XEN_DOM_ID;
+        rchn->u.interdomain.remote_port = local_port;
+        rchn->state                     = ECS_INTERDOMAIN;
+        bind_interdomain.local_port = local_port;
+        err = 0;
+    }
 
-	err = HYPERVISOR_event_channel_op(EVTCHNOP_bind_interdomain,
-					  &bind_interdomain);
-
-	return err ? : bind_evtchn_to_irq(bind_interdomain.local_port);
+    return err ? : bind_evtchn_to_irq(bind_interdomain.local_port);
 }
 EXPORT_SYMBOL_GPL(bind_interdomain_evtchn_to_irq);
 

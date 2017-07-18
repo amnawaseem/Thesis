@@ -343,4 +343,19 @@ struct evtchn_fifo_domain {
     unsigned int num_evtchns;
 };
 
+static inline struct evtchn *evtchn_from_port(struct evtchn *evtchn_domain, unsigned int p)
+{
+    if ( p < EVTCHNS_PER_BUCKET )
+        return &evtchn_domain[p];
+    return NULL;
+}
+
+static inline bool port_is_valid( unsigned int p)
+{
+    if ( p >= EVTCHN_2L_NR_CHANNELS )
+        return 0;
+    return p < EVTCHNS_PER_BUCKET;
+}
+
+
 #endif /* __XEN_PUBLIC_EVENT_CHANNEL_H__ */
