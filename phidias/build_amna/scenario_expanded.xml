@@ -92,9 +92,11 @@
     <feature name="driver:clock" value="arm_generic"/>
     <feature name="driver:irq" value="gic"/>
     <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="*"/>
+    <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu"/>
     <memreq id="grant_table" flags_demand="rwgs" flags_prevent="" size="0x20000"/>
     <memreq id="xenstore" flags_demand="rwgs" flags_prevent="" size="0x1000"/>
-    <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu"/>
+    <memreq id="event_domains" flags_demand="rwgs" flags_prevent="" size="0x2000"/>
+    <memreq id="shared_info" flags_demand="rwgs" flags_prevent="" size="0x2000"/>
     <memreq id="core_rx" size="0x0" flags_demand="rxg" flags_prevent="wdus"/>
     <memreq id="core_r" size="0x0" flags_demand="rg" flags_prevent="wxdus"/>
     <memreq id="core_rws" size="0x0" flags_demand="rwgs" flags_prevent="xdu"/>
@@ -188,6 +190,8 @@
       <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
       <map xref="grant_table" base="0xfee000000" flags="rws"/>
       <map xref="xenstore" base="0xfee020000" flags="rws"/>
+      <map xref="event_domains" base="0xfee021000" flags="rws"/>
+      <map xref="shared_info" base="0xfee023000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
     <init arch_page="linux1_arch">
@@ -258,6 +262,8 @@
       <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
       <map xref="grant_table" base="0xfee000000" flags="rws"/>
       <map xref="xenstore" base="0xfee020000" flags="rws"/>
+      <map xref="event_domains" base="0xfee021000" flags="rws"/>
+      <map xref="shared_info" base="0xfee023000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
     <init arch_page="linux2_arch">
