@@ -157,7 +157,7 @@ static struct notifier_block xen_pvclock_gtod_notifier = {
 static int xen_starting_cpu(unsigned int cpu)
 {
 	struct vcpu_register_vcpu_info info;
-	struct vcpu_info *vcpup;
+	struct vcpu_info *vcpup;  
 	int err;
 
 	/* 
@@ -167,7 +167,7 @@ static int xen_starting_cpu(unsigned int cpu)
 	 */
 	if (per_cpu(xen_vcpu, cpu) != NULL)
 		goto after_register_vcpu_info;
-
+    
 	pr_info("Xen: initializing cpu%d\n", cpu);
 	vcpup = per_cpu_ptr(xen_vcpu_info, cpu);
 
@@ -178,8 +178,10 @@ static int xen_starting_cpu(unsigned int cpu)
 				 &info);
 	memcpy(&HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(cpu)], vcpup, sizeof(struct vcpu_info));
 	//BUG_ON(err);
-	per_cpu(xen_vcpu, cpu) = &HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(cpu)];
-
+    per_cpu(xen_vcpu, cpu) =
+			&HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(cpu)];
+   
+	//per_cpu(xen_vcpu, cpu) = &HYPERVISOR_shared_info->vcpu_info[xen_vcpu_nr(cpu)];  
 	xen_setup_runstate_info(cpu);
 
 after_register_vcpu_info:
@@ -353,11 +355,15 @@ static int __init xen_guest_init(void)
 
 	//shared_info_page = (struct shared_info *)get_zeroed_page(GFP_KERNEL);
     Shared_info_pages = (unsigned long)xen_remap(0xfee023000, XEN_PAGE_SIZE * 2);
-    memset_io((void *)Shared_info_pages, 0, XEN_PAGE_SIZE * 2);
     if (!Shared_info_pages) {
 		pr_err("not enough memory\n");
 		return -ENOMEM;
 	}
+
+#if CONFIG_XEN_DOM_ID == 0
+    //memset_io((void *)Shared_info_pages, 0, XEN_PAGE_SIZE * 2);
+#endif
+
 	//xatp.domid = DOMID_SELF;
 	//xatp.idx = 0;
 	//xatp.space = XENMAPSPACE_shared_info;

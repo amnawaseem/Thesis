@@ -517,6 +517,7 @@ static void setup_ports(void)
 void __init xen_evtchn_2l_init(void)
 {
     int i;
+    struct evtchn *event_channel_ptr;
 	pr_info("Using 2-level ABI\n");
 	evtchn_ops = &evtchn_ops_2l;
 
@@ -529,8 +530,9 @@ void __init xen_evtchn_2l_init(void)
     for ( i = 0; i < EVTCHNS_PER_BUCKET; i++ )
     {
        //Each port has an event channel structure associated with it
-       evtchn_domain_local[i].port = i;
-       spin_lock_init(&evtchn_domain_local[i].lock);
+       event_channel_ptr = &evtchn_domain_local[i];
+       event_channel_ptr->port = i;
+       spin_lock_init(&event_channel_ptr->lock);
     }
     evtchn_from_port(evtchn_domain_local, 0)->state = ECS_RESERVED;
 	

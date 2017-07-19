@@ -977,6 +977,7 @@ static int gnttab_map(unsigned int start_idx, unsigned int end_idx)
 			xatp.space = XENMAPSPACE_grant_table;
 			xatp.gpfn = xen_auto_xlat_grant_frames.pfn[i];
 			rc = HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xatp);
+            rc = 0;
 			if (rc != 0) {
 				pr_warn("grant table add_to_physmap failed, err=%d\n",
 					rc);
@@ -999,12 +1000,12 @@ static int gnttab_map(unsigned int start_idx, unsigned int end_idx)
 	set_xen_guest_handle(setup.frame_list, frames);
 
 	rc = HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1);
-	if (rc == -ENOSYS) {
+	/* if (rc == -ENOSYS) {
 		kfree(frames);
 		return -ENOSYS;
-	}
+	} */
 
-	BUG_ON(rc || setup.status);
+	//BUG_ON(rc || setup.status);
 
 	rc = gnttab_interface->map_frames(frames, nr_gframes);
 

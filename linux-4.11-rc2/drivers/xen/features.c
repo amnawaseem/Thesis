@@ -32,7 +32,9 @@ void xen_setup_features(void)
 	}
 	xen_features[0] = 1;
 	xen_features[2] = 1;
+#if CONFIG_XEN_DOM_ID == 0
 	xen_features[11] = 1;
+#endif
 	xen_features[13] = 1;
 
 }

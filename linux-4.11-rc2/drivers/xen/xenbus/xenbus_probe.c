@@ -794,7 +794,8 @@ static int __init xenbus_init(void)
 			goto out_error;
 		xen_store_interface =
 			xen_remap(xen_store_gfn << XEN_PAGE_SHIFT,
-				  XEN_PAGE_SIZE);;
+				  XEN_PAGE_SIZE);
+        memset_io(xen_store_interface, 0,  XEN_PAGE_SIZE);
 		break;
 	case XS_PV:
 		xen_store_evtchn = xen_start_info->store_evtchn;
@@ -802,14 +803,9 @@ static int __init xenbus_init(void)
 		xen_store_interface = gfn_to_virt(xen_store_gfn);
 		break;
 	case XS_HVM:
-		err = hvm_get_parameter(HVM_PARAM_STORE_EVTCHN, &v);
+		err = xenstored_local_init();
 		if (err)
 			goto out_error;
-		xen_store_evtchn = (int)v;
-		err = hvm_get_parameter(HVM_PARAM_STORE_PFN, &v);
-		if (err)
-			goto out_error;
-		xen_store_gfn = (unsigned long)v;
 		xen_store_interface =
 			xen_remap(xen_store_gfn << XEN_PAGE_SHIFT,
 				  XEN_PAGE_SIZE);

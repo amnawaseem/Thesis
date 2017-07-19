@@ -471,10 +471,13 @@ int xb_init_comms(void)
 		xenbus_irq = err;
 
 		if (!xenbus_task) {
-			xenbus_task = kthread_run(xenbus_thread, NULL,
-						  "xenbus");
+            if (xen_initial_domain()){
+			    xenbus_task = kthread_run(xenbus_thread, NULL,
+						  "xenbus1");
+
 			if (IS_ERR(xenbus_task))
 				return PTR_ERR(xenbus_task);
+            }
 		}
 	}
 
