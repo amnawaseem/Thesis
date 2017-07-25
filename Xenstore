@@ -1,0 +1,6 @@
+Now we have to subsitute Xenstore server functionality originally implemented as a tool utility in Xen and run as a daemon.
+The hypervisor is not aware of Xenstore presence. It is accessed by guests just like any other device driver. It is maintained by Domain 0. 
+For requests, there is 1KB space allocated and for responses also 1KB space is allocated in Xenstore Page.
+So dom0 and domU produces the requests and consumes the responses right now in the current original code
+Xen Tool deamon has the code for cosuming the requests and producing the responses.
+We will change the 
