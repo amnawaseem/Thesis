@@ -6,7 +6,7 @@ phidias_buildstamp_git_revision:
 
 .global phidias_buildstamp_time_compile
 phidias_buildstamp_time_compile:
-	.asciz	"2017/07/04 13:25:59"
+	.asciz	"2017/07/20 13:35:08"
 
 .global	binutils_version
 binutils_version:

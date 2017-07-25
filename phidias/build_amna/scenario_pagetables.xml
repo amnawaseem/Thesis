@@ -11,26 +11,28 @@
       <device id="thermal" base="0xf7030000" size="0x2000"/>
       <device id="CATCHALL" base="0xf0000000" size="0x0fff0000"/>
       <memory id="dram" base="0x00000000" size="0x80000000">
-        <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0x200000;[1]=0x240000"/>
-        <memreq id="cca0" flags_demand="" flags_prevent="" size="0x100000" on="dram" base="0x0"/>
-        <memreq id="cca1" flags_demand="" flags_prevent="" size="0x100000" on="dram" base="0x100000"/>
-        <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x280000"/>
+        <memreq id="trace" size="0x40000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0x0;[1]=0x40000"/>
+        <memreq id="xcore" size="0x40000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x80000"/>
+        <memreq id="grant_table" flags_demand="rwgs" flags_prevent="" size="0x20000" on="dram" base="0xc0000"/>
+        <memreq id="xenstore" flags_demand="rwgs" flags_prevent="" size="0x1000" on="dram" base="0xe4000"/>
+        <memreq id="event_domains" flags_demand="rwgs" flags_prevent="" size="0x2000" on="dram" base="0xe0000"/>
+        <memreq id="shared_info" flags_demand="rwgs" flags_prevent="" size="0x2000" on="dram" base="0xe2000"/>
         <memreq id="core_rx" size="0x9000" flags_demand="rxg" flags_prevent="wdus" on="dram" base="0x10008000"/>
         <memreq id="core_r" size="0x3000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10011000"/>
         <memreq id="core_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x10014000"/>
         <memreq id="core_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10015000"/>
-        <memreq id="core_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0x2c0000;[1]=0x2c1000"/>
-        <memreq id="config_r" size="0x4000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10016000"/>
-        <memreq id="config_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0x2c2000;[1]=0x2c3000"/>
-        <memreq id="config_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x1001b000"/>
-        <memreq id="config_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1001a000"/>
-        <memreq id="pagetables" size="0x50000" flags_demand="" flags_prevent="wxdus" on="dram" base="0x1001c000"/>
-        <memreq id="blob" size="0x1b15000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1006c000"/>
-        <memreq id="stack" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0x2c4000;[1]=0x2c5000"/>
-        <memreq id="linux1_main" size="0x30000000" flags_demand="rw" flags_prevent="xdus" on="dram" cpumap="[0]" base="[0]=0x11c00000"/>
-        <memreq id="linux1_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram" base="[0]=0x2c6000"/>
-        <memreq id="linux2_main" size="0x30000000" flags_demand="rw" flags_prevent="xdus" on="dram" cpumap="[0]" base="[0]=0x41c00000"/>
-        <memreq id="linux2_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram" base="[0]=0x2c7000"/>
+        <memreq id="core_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0xe5000;[1]=0xe6000"/>
+        <memreq id="config_r" size="0x5000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x10016000"/>
+        <memreq id="config_rw" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0xe7000;[1]=0xe8000"/>
+        <memreq id="config_rws" size="0x1000" flags_demand="rwgs" flags_prevent="xdu" on="dram" base="0x1001c000"/>
+        <memreq id="config_rwt" size="0x1000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1001b000"/>
+        <memreq id="pagetables" size="0x50000" flags_demand="" flags_prevent="wxdus" on="dram" base="0x1001d000"/>
+        <memreq id="blob" size="0x1a3a000" flags_demand="rg" flags_prevent="wxdus" on="dram" base="0x1006d000"/>
+        <memreq id="stack" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0,1]" on="dram" base="[0]=0xe9000;[1]=0xea000"/>
+        <memreq id="linux2_main" size="0x30000000" flags_demand="rw" flags_prevent="xdus" on="dram" cpumap="[0]" base="[0]=0x11c00000"/>
+        <memreq id="linux2_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram" base="[0]=0xeb000"/>
+        <memreq id="linux1_main" size="0x30000000" flags_demand="rw" flags_prevent="xdus" on="dram" cpumap="[0]" base="[0]=0x41c00000"/>
+        <memreq id="linux1_arch" size="0x1000" flags_demand="rwg" flags_prevent="xdus" cpumap="[0]" on="dram" base="[0]=0xec000"/>
       </memory>
       <memory id="sram" base="0xfff80000" size="0x12000">
         <memreq id="linux1_sram" base="0xfff80000" size="0x11000" flags_prevent="" flags_demand="" on="sram" cpumap="[0]"/>
@@ -107,10 +109,6 @@
       </paging_format>
     </arch>
   </platform>
-  <!-- Boot this setup with:
-	./hisi-idt.py -d /dev/ttyUSB1 \-\-img1 .../l-loader/l-loader.bin
-	fastboot boot $BUILD/hikey/image exec_base="0xf40000000" 
-   -->
   <hypervisor ncpus="2" load_base="0x10008000" exec_base="0xf40000000" ccprefix="aarch64-linux-gnu-" entry="0x10008000">
     <feature name="multiplexer" value="yes"/>
     <feature name="debugger" value="yes"/>
@@ -118,95 +116,36 @@
     <feature name="driver:timer" value="arm_generic"/>
     <feature name="driver:clock" value="arm_generic"/>
     <feature name="driver:irq" value="gic"/>
-    <address_space type="mmu" format="arm64:g4io40" base="[-1]=0x10021000;[0]=0x10036000;[1]=0x10049000">
-      <map xref="serial" flags="rwgd" base="0xf400be000"/>
-      <map xref="irqc" flags="rwgd" base="0xf400b2000"/>
-      <map xref="gpio4j" flags="rwgd" base="0xf40097000"/>
-      <map xref="timers" flags="rwgd" base="0xf400a8000"/>
-      <map xref="thermal" flags="rwgd" base="0xf400bb000"/>
+    <address_space type="mmu" format="arm64:g4io40" base="[-1]=0x10022000;[0]=0x10037000;[1]=0x1004a000">
+      <map xref="serial" flags="rwgd" base="0xf400e6000"/>
+      <map xref="irqc" flags="rwgd" base="0xf400d4000"/>
+      <map xref="gpio4j" flags="rwgd" base="0xf400b9000"/>
+      <map xref="timers" flags="rwgd" base="0xf400ca000"/>
+      <map xref="thermal" flags="rwgd" base="0xf400dd000"/>
       <map xref="CATCHALL" flags="rwgd" base="0xf40200000"/>
       <map xref="core_rx" is_init="is_init" flags="rxg" base="0xf40000000"/>
       <map xref="core_r" flags="rg" base="0xf40009000"/>
       <map xref="core_rws" flags="rwgs" base="0xf4000c000"/>
-      <map xref="core_rwt" flags="rg" base="0xf400c0000"/>
+      <map xref="core_rwt" flags="rg" base="0xf400e8000"/>
       <map xref="core_rw" flags="rwg" base="0xf4000d000"/>
       <map xref="config_r" is_init="is_init" flags="rg" base="0xf4000e000"/>
-      <map xref="config_rw" flags="rwg" base="0xf40012000"/>
-      <map xref="config_rws" flags="rwgs" base="0xf40013000"/>
-      <map xref="config_rwt" flags="rg" base="0xf400c2000"/>
+      <map xref="config_rw" flags="rwg" base="0xf40013000"/>
+      <map xref="config_rws" flags="rwgs" base="0xf40014000"/>
+      <map xref="config_rwt" flags="rg" base="0xf400ea000"/>
       <map xref="blob" flags="rg" base="0xf50200000"/>
-      <map xref="stack" flags="rwg" base="0xf400c4000"/>
-      <map xref="trace" flags="rwg" base="0xf40015000"/>
-      <map xref="xcore" flags="rwgs" base="0xf40056000"/>
-      <map xref="linux1_main" flags="rw" cpumap="[0]" base="[0]=0x200000"/>
-      <map xref="linux1_arch" flags="rwg" cpumap="[0]" base="[0]=0xf400c6000"/>
-      <map xref="linux2_main" flags="rw" cpumap="[0]" base="[0]=0x30400000"/>
-      <map xref="linux2_arch" flags="rwg" cpumap="[0]" base="[0]=0xf400c8000"/>
+      <map xref="stack" flags="rwg" base="0xf400ec000"/>
+      <map xref="trace" flags="rwg" base="0xf40016000"/>
+      <map xref="xcore" flags="rwgs" base="0xf40057000"/>
+      <map xref="grant_table" flags="rwgs" base="0xf40098000"/>
+      <map xref="xenstore" flags="rwgs" base="0xf400ee000"/>
+      <map xref="event_domains" flags="rwgs" base="0xf400e0000"/>
+      <map xref="shared_info" flags="rwgs" base="0xf400e3000"/>
+      <map xref="linux2_main" flags="rw" cpumap="[0]" base="[0]=0x200000"/>
+      <map xref="linux2_arch" flags="rwg" cpumap="[0]" base="[0]=0xf400f0000"/>
+      <map xref="linux1_main" flags="rw" cpumap="[0]" base="[0]=0x30400000"/>
+      <map xref="linux1_arch" flags="rwg" cpumap="[0]" base="[0]=0xf400f2000"/>
     </address_space>
   </hypervisor>
-  <guest id="linux1" ncpus="1" cpumap="[0]">
-    <vdev id="linux1_uart" type="serial" frontend="pl011" master="master">
-      <emulate base="0xf7113000" size="0x1000"/>
-    </vdev>
-    <vdev id="linux1_gic" type="irq_controller" frontend="arm_gic_virtext" master="master">
-      <emulate base="0xf6801000" size="0x1000"/>
-    </vdev>
-    <vdev id="linux1_sp804" type="timer" frontend="sp804">
-      <emulate base="0xf8008000" size="0x1000"/>
-    </vdev>
-    <vdev id="linux1_armcp14" type="timer" frontend="armcp14"/>
-    <vdev id="linux1_mmio_mediactrl" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf4410000" size="0x1000"/>
-    </vdev>
-    <vdev id="linux1_mmio1" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf7020000" size="0x14000"/>
-    </vdev>
-    <vdev id="linux1_mmio_aoctrl" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf7800000" size="0x2000"/>
-    </vdev>
-    <vdev id="linux1_mmio3" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf8011000" size="0x5000"/>
-    </vdev>
-    <vdev id="linux1_mmio_uart1" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf7111000" size="0x1000"/>
-    </vdev>
-    <vdev id="linux1_mmio_uart2" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf7112000" size="0x1000"/>
-    </vdev>
-    <vdev id="linux1_mmio_uart4" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf7114000" size="0x1000"/>
-    </vdev>
-    <vdev id="linux1_mmio4" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf7100000" size="0x8000"/>
-    </vdev>
-    <vdev id="linux1_mmio2" type="memory32">
-      <value type="default_mask_mem_r" value="0xffffffff"/>
-      <emulate base="0xf8000000" size="0x8000"/>
-    </vdev>
-    <address_space type="mmu" format="arm64:g4io40n" base="[0]=0x1004a000">
-      <map xref="linux1_main" base="0x00000000" flags="rwx"/>
-      <map xref="linux1_sram" base="0xfff80000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rs"/>
-      <map xref="cca0" base="0xfef00000" flags="rws"/>
-      <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
-    </address_space>
-    <init arch_page="linux1_arch">
-      <copy xref="linux_kernel" dref="linux1_main" offset="0x80000"/>
-      <copy xref="linux_ramdisk" dref="linux1_main" offset="0xa000000"/>
-      <copy xref="linux_dtb" dref="linux1_main" offset="0x8000"/>
-      <cap type="ipc" target_xref="linux2" param="0xf"/>
-    </init>
-    <entry bp_xref="linux1_main" bp_offset="0x80000"/>
-    <sched class="wfq"/>
-  </guest>
   <guest id="linux2" ncpus="1" cpumap="[0]">
     <vdev id="linux2_uart" type="serial" frontend="pl011" master="master">
       <emulate base="0xf7113000" size="0x1000"/>
@@ -254,24 +193,104 @@
       <value type="default_mask_mem_r" value="0xffffffff"/>
       <emulate base="0xf8000000" size="0x8000"/>
     </vdev>
-    <address_space type="mmu" format="arm64:g4io40n" base="[0]=0x10052000">
+    <!--vdev id="testing_device2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff" />
+      <emulate base="0xfee00000" size="0x100000" />
+    </vdev-->
+    <address_space type="mmu" format="arm64:g4io40n" base="[0]=0x1004c000">
       <map xref="linux2_main" base="0x00000000" flags="rwx"/>
-      <map xref="cca1" base="0xfee00000" flags="rs"/>
-      <map xref="cca0" base="0xfef00000" flags="rws"/>
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee00000" flags="rws"/>
+      <map xref="xenstore" base="0xfee20000" flags="rws"/>
+      <map xref="event_domains" base="0xfee21000" flags="rws"/>
+      <map xref="shared_info" base="0xfee23000" flags="rws"/>
       <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
     </address_space>
     <init arch_page="linux2_arch">
-      <copy xref="linux_kernel" dref="linux2_main" offset="0x80000"/>
+      <copy xref="linux_kernel2" dref="linux2_main" offset="0x80000"/>
       <copy xref="linux_ramdisk" dref="linux2_main" offset="0xa000000"/>
       <copy xref="linux_dtb" dref="linux2_main" offset="0x8000"/>
-      <cap type="ipc" target_xref="linux1" param="0xf"/>
+      <cap type="ipc" target_xref="linux1" param="0x9"/>
     </init>
     <entry bp_xref="linux2_main" bp_offset="0x80000"/>
     <sched class="wfq"/>
   </guest>
+  <guest id="linux1" ncpus="1" cpumap="[0]">
+    <vdev id="linux1_uart" type="serial" frontend="pl011" master="master">
+      <emulate base="0xf7113000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_gic" type="irq_controller" frontend="arm_gic_virtext" master="master">
+      <emulate base="0xf6801000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_sp804" type="timer" frontend="sp804">
+      <emulate base="0xf8008000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_armcp14" type="timer" frontend="armcp14"/>
+    <vdev id="linux1_mmio_mediactrl" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf4410000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio1" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7020000" size="0x14000"/>
+    </vdev>
+    <vdev id="linux1_mmio_aoctrl" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7800000" size="0x2000"/>
+    </vdev>
+    <vdev id="linux1_mmio3" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf8011000" size="0x5000"/>
+    </vdev>
+    <vdev id="linux1_mmio_uart1" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7111000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio_uart2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7112000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio_uart4" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7114000" size="0x1000"/>
+    </vdev>
+    <vdev id="linux1_mmio4" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf7100000" size="0x8000"/>
+    </vdev>
+    <vdev id="linux1_mmio2" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff"/>
+      <emulate base="0xf8000000" size="0x8000"/>
+    </vdev>
+    <!--vdev id="testing_device" type="memory32">
+      <value type="default_mask_mem_r" value="0xffffffff" />
+      <emulate base="0xfee00000" size="0x100000" />
+    </vdev-->
+    <address_space type="mmu" format="arm64:g4io40n" base="[0]=0x10052000">
+      <map xref="linux1_main" base="0x00000000" flags="rwx"/>
+      <map xref="linux1_sram" base="0xfff80000" flags="rwx"/>
+      <!--map xref="cca1" base="0xfee00000" flags="rws" /-->
+      <!--map xref="cca0" base="0xfef00000" flags="rws" /-->
+      <map xref="grant_table" base="0xfee00000" flags="rws"/>
+      <map xref="xenstore" base="0xfee20000" flags="rws"/>
+      <map xref="event_domains" base="0xfee21000" flags="rws"/>
+      <map xref="shared_info" base="0xfee23000" flags="rws"/>
+      <map xref="irqc" base="0xf6802000" subsize="0x1000" offset="0x6000" flags="rw"/>
+    </address_space>
+    <init arch_page="linux1_arch">
+      <copy xref="linux_kernel1" dref="linux1_main" offset="0x80000"/>
+      <copy xref="linux_ramdisk" dref="linux1_main" offset="0xa000000"/>
+      <copy xref="linux_dtb" dref="linux1_main" offset="0x8000"/>
+      <cap type="ipc" target_xref="linux2" param="0x9"/>
+    </init>
+    <entry bp_xref="linux1_main" bp_offset="0x80000"/>
+    <sched class="wfq"/>
+  </guest>
   <files>
-    <file id="linux_kernel" href="/home/amna/Thesis/Linux_4.11/linux-4.11-rc2/arch/arm64/boot/Image" offset="0x0" size="0x851808"/>
-    <file id="linux_ramdisk" href="/home/amna/Thesis/Phidias_access/initramfs-debug.gz" offset="0x851808" size="0x12bb39a"/>
-    <file id="linux_dtb" href="/home/amna/Thesis/Phidias_access/hi6220new1.dtb" offset="0x1b0cba2" size="0x7d03"/>
+    <file id="linux_kernel1" href="/home/amna/Thesis/Linux_4.11/linux-4.11-rc2/arch/arm64/boot/Image1" offset="0x0" size="0x892808"/>
+    <file id="linux_kernel2" href="/home/amna/Thesis/Linux_4.11/linux-4.11-rc2/arch/arm64/boot/Image2" offset="0x892808" size="0x892808"/>
+    <file id="linux_ramdisk" href="/home/amna/Thesis/Phidias_access/initramfs-debug.gz" offset="0x1125010" size="0x90cb79"/>
+    <file id="linux_dtb" href="/home/amna/Thesis/Phidias_access/hi6220new1.dtb" offset="0x1a31b89" size="0x7df7"/>
   </files>
 </scenario>
