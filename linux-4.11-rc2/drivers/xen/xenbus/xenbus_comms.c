@@ -163,7 +163,7 @@ static int xb_data_to_read(void)
 	return (intf->rsp_cons != intf->rsp_prod);
 }
 
-static int xb_read(void *data, unsigned int len)
+int xb_read(void *data, unsigned int len)
 {
 	struct xenstore_domain_interface *intf = xen_store_interface;
 	XENSTORE_RING_IDX cons, prod;
@@ -210,6 +210,7 @@ static int xb_read(void *data, unsigned int len)
 	return bytes;
 }
 
+/* The above two functions will be */
 static int process_msg(void)
 {
 	static struct {
@@ -471,13 +472,12 @@ int xb_init_comms(void)
 		xenbus_irq = err;
 
 		if (!xenbus_task) {
-            if (xen_initial_domain()){
-			    xenbus_task = kthread_run(xenbus_thread, NULL,
-						  "xenbus1");
+			xenbus_task = kthread_run(xenbus_thread, NULL,
+						  "xenbus");
 
 			if (IS_ERR(xenbus_task))
 				return PTR_ERR(xenbus_task);
-            }
+            
 		}
 	}
 

@@ -737,7 +737,7 @@ static int __init balloon_init(void)
 {
 	int i;
 
-	if (!xen_domain())
+	if (xen_domain())
 		return -ENODEV;
 
 	pr_info("Initialising balloon driver\n");

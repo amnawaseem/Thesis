@@ -179,7 +179,8 @@ static bool xenbus_ok(void)
 	case XS_HVM:
 		/* FIXME: Could check that the remote domain is alive,
 		 * but it is normally initial domain. */
-		return true;
+       return false;
+
 	default:
 		break;
 	}

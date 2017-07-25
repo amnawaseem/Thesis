@@ -286,7 +286,7 @@ void __init xen_early_init(void)
 	else
 		xen_start_info->flags &= ~(SIF_INITDOMAIN|SIF_PRIVILEGED);
 
-	if (!console_set_on_cmdline && !xen_initial_domain())
+	if (!console_set_on_cmdline && !xen_initial_domain()){}
 		add_preferred_console("hvc", 0, NULL);
 }
 
@@ -354,15 +354,15 @@ static int __init xen_guest_init(void)
 		xen_efi_runtime_setup();
 
 	//shared_info_page = (struct shared_info *)get_zeroed_page(GFP_KERNEL);
-    Shared_info_pages = (unsigned long)xen_remap(0xfee023000, XEN_PAGE_SIZE * 2);
+    Shared_info_pages = (unsigned long)xen_remap(0xfee23000, XEN_PAGE_SIZE * 2);
     if (!Shared_info_pages) {
 		pr_err("not enough memory\n");
 		return -ENOMEM;
 	}
 
-#if CONFIG_XEN_DOM_ID == 0
-    //memset_io((void *)Shared_info_pages, 0, XEN_PAGE_SIZE * 2);
-#endif
+    if (xen_initial_domain())
+        memset_io((void *)Shared_info_pages, 0, XEN_PAGE_SIZE * 2);
+
 
 	//xatp.domid = DOMID_SELF;
 	//xatp.idx = 0;
@@ -390,7 +390,7 @@ static int __init xen_guest_init(void)
 		per_cpu(xen_vcpu_id, cpu) = cpu;
 
     //xen_auto_xlat_grant_frames.count = gnttab_max_grant_frames();
-    grant_frames = 0xfee000000;
+    grant_frames = 0xfee00000;
     if (gnttab_setup_auto_xlat_frames(grant_frames))
     {
 		free_percpu(xen_vcpu_info);

@@ -648,7 +648,7 @@ int xenbus_dev_cancel(struct device *dev)
 EXPORT_SYMBOL_GPL(xenbus_dev_cancel);
 
 /* A flag to determine if xenstored is 'ready' (i.e. has started) */
-int xenstored_ready;
+int xenstored_ready = 0;
 
 
 int register_xenstore_notifier(struct notifier_block *nb)
@@ -699,7 +699,6 @@ device_initcall(xenbus_probe_initcall);
 static int __init xenstored_local_init(void)
 {
     int err = -ENOMEM;
-    unsigned long page = 0;
     struct evtchn_alloc_unbound alloc_unbound;
 
     /* Allocate Xenstore page */
@@ -717,7 +716,7 @@ static int __init xenstored_local_init(void)
 
     //Clears out the xenstore region
     //memset_io((volatile void __iomem *)vaddr, 0, PAGE_SIZE );
-	xen_store_gfn = xen_start_info->store_mfn = 0xfee020000 >> XEN_PAGE_SHIFT;
+	xen_store_gfn = xen_start_info->store_mfn = 0xfee20000 >> XEN_PAGE_SHIFT;
 
 	/* Next allocate a local port which xenstored can bind to */
 	alloc_unbound.dom        = DOMID_SELF;
@@ -736,8 +735,6 @@ static int __init xenstored_local_init(void)
 	return 0;
 
  out_err:
-	if (page != 0)
-		free_page(page);
 	return err;
 }
 
@@ -795,7 +792,7 @@ static int __init xenbus_init(void)
 		xen_store_interface =
 			xen_remap(xen_store_gfn << XEN_PAGE_SHIFT,
 				  XEN_PAGE_SIZE);
-        memset_io(xen_store_interface, 0,  XEN_PAGE_SIZE);
+        memset_io(xen_store_interface, 0,  XEN_PAGE_SIZE); 
 		break;
 	case XS_PV:
 		xen_store_evtchn = xen_start_info->store_evtchn;
@@ -808,12 +805,12 @@ static int __init xenbus_init(void)
 			goto out_error;
 		xen_store_interface =
 			xen_remap(xen_store_gfn << XEN_PAGE_SHIFT,
-				  XEN_PAGE_SIZE);
+				  XEN_PAGE_SIZE); 
 		break;
 	default:
 		pr_warn("Xenstore state unknown\n");
 		break;
-	}
+	} 
 
 	/* Initialize the interface to xenstore. */
 	err = xs_init();
