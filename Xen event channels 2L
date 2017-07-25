@@ -1,0 +1,24 @@
+For Event channels 2L ABI, only shared_info page and event channel struct domain for each domain is shared with other domains hence we can create a shared space and divide it among shared_info pages for each guest based on their DOM_ID
+Also event channel domain structures will be shared using on large shared memory and dividing it among domains.
+    <memreq id="event_domains" flags_demand="rwgs" flags_prevent="" size="0x2000" />
+    <memreq id="shared_info" flags_demand="rwgs" flags_prevent="" size="0x2000" />
+    <map xref="event_domains" base="0xfee021000" flags="rws" />
+    <map xref="shared_info" base="0xfee023000" flags="rws" />
+evtchn_domain_local is the local domain structure . evtchn_domains is  the shared event domains pages containing infomration about all others including itself.
+HYPERVISOR_shared_info is the local shared info page. Global shared info page of all domains is contained in Shared_info_pages
+After initializing xen_evtchn_2l_init, all event channels bits in shared info are masked. In shared info page, there are 4096 ports or event channels bits i.e. an array of 64 elements with each element of 64 bits ( 64 * 64 = 4096). Each bit corresponds to a port or event channel. 
+Now lets implement hypercalls.
+In Events_base.c 
+EVTCHNOP_close is called. For Events 2l, I have added function to close event channel in ops evtchn_close
+evtchn_2l_unmask is also implemented. NOte: For now, we will consider one vcpu inside a guest. This will make things simpler.
+For now, we will not consider PIRQ related event channels binding i.e EVTCHNOP_bind_pirq
+For now, we will also not consider IPI related event channels. i.e. EVTCHNOP_bind_ipi
+For now, we will also not consider EVTCHNOP_bind_virq 
+Lets just focus on bind_interdomain_evtchn_to_irq which calls EVTCHNOP_bind_interdomain
+For now, find _virq calls EVTCHNOP_status hypercall. May be we can ignore it for now.
+EVTCHNOP_set_priority is called by xen setup timer for VIRQ. We will igore it for now.
+EVTCHNOP_bind_vcpu is used for VCPUS for IPI. We will ignore it for now
+EVTCHNOP_expand_array is used by FIFO ABI. Not important for 2L
+EVTCHNOP_alloc_unbound is useful Hypercall used by Xen bus driver and xen bus clients. Changes for it are required in Xenbus_client.c ,Xenbus_dev_backend.c, Xenbus_probe.c .long evtchn_alloc_unbound(struct evtchn_alloc_unbound *alloc) is implemented in events_base.c and exported to public use. Other drivers can call now this function in their code instead of hypercall.
+Replace Hypercalls to EVTCHNOP_Close by xen_evtchn_close. I have made this function global exported.
+Now most important Hypercall EVTCHNOP_send. It is called from static function notify_remote_via_evtchn in events.h file. evtchn_send is implemented in events_base.c 
