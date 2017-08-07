@@ -1,0 +1,5 @@
+drivers\xen\grant_table.c is the basic file for grant table operations. We will look into this file and port it
+__max_nr_grant_frames returns 4 (legacy support of grant frames) for GNTTABOP_query_size
+Now as I can see, remote and local domains shared grant tables with each other. 
+These grant tables has grant entries of v1. Each entry has domid, ref and frame. Frame is the physical address of page shared.
+map grant reference can be implemented by using mremap function. Frame in grant entry is mapped to host_addr in map op field.
