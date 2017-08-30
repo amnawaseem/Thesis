@@ -8,3 +8,14 @@ if(new_skb){
      kfree_skb(old_skb);
      old_skb = new_skb;
      
+
+Netfront tx and rx packets to netback.
+In netback driver, rx and tx are used in context of netfront i.e. rx means netfront is going to receive and tx means netfront wants to transmit
+Netfront allocates rx skb buffers in which netback copies data
+Netfront allocates tx buffers, netback maps this tx buffers and tx the packets
+
+First we implement tx path from DomU to DOm0
+xennet_start_xmit is the function for starting TX from DomU to Dom0
+xennet_make_first_txreq  calls
+notify_remote_via_irq
+Now lets see what happens in netback on this interrupt
