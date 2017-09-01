@@ -27,6 +27,8 @@ chmod +x *
 ./xenstore-write /local/domain/0/backend/vif/1/0/frontend "/local/domain/1/device/vif/0"
 ./xenstore-write /local/domain/0/backend/vif/1/0/script "/etc/xen/scripts/vif-route"
 ./xenstore-write /local/domain/0/backend/vif/1/0/handle 0
+./xenstore-write /local/domain/0/backend/vif/1/0/mac "D2:A3:CD:27:4A:53"
+./xenstore-chmod -r  /local/domain/0/backend/vif/1/0/mac rw
 ./xenstore-chmod -r /local/domain/0/backend/vif/1/0 rw
 ./xenstore-write /local/domain/1/device/vif/0/state 1
 ./xenstore-write /local/domain/0/backend/vif/1/0/state 1
